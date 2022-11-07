@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.TimeZone;
 import javax.security.auth.x500.X500Principal;
 import org.conscrypt.TestUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -401,6 +402,7 @@ public class X509CertificateTest {
     /**
      * Confirm that explicit EC params aren't accepted in certificates.
      */
+    @Ignore("Tongsuo allows explicit EC params in certificates")
     @Test
     public void testExplicitEcParams() throws Exception {
         ServiceTester.test("CertificateFactory")

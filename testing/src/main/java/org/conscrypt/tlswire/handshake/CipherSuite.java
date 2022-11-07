@@ -186,6 +186,8 @@ public class CipherSuite {
             new CipherSuite(0x1303, "TLS_CHACHA20_POLY1305_SHA256"),
             new CipherSuite(0x1304, "TLS_AES_128_CCM_SHA256"),
             new CipherSuite(0x1305, "TLS_AES_128_CCM_8_SHA256"),
+            new CipherSuite(0x00C6, "TLS_SM4_GCM_SM3"),
+            new CipherSuite(0x00C7, "TLS_SM4_CCM_SM3"),
             new CipherSuite(0x5600, "TLS_FALLBACK_SCSV"),
             new CipherSuite(0xc001, "TLS_ECDH_ECDSA_WITH_NULL_SHA"),
             new CipherSuite(0xc002, "TLS_ECDH_ECDSA_WITH_RC4_128_SHA"),

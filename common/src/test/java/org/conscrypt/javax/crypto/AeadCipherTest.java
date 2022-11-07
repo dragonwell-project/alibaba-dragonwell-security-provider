@@ -14,6 +14,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.conscrypt.TestUtils;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -69,6 +70,7 @@ public class AeadCipherTest {
     }
   }
 
+  @Ignore("not supported by Tongsuo")
   @Test
   public void testUpdateAAD_AfterInit() throws Exception {
     Cipher c = Cipher.getInstance(cipher);
@@ -77,6 +79,7 @@ public class AeadCipherTest {
     c.updateAAD(ByteBuffer.wrap(new byte[8]));
   }
 
+  @Ignore("not supported by Tongsuo")
   @Test
   public void testUpdateAAD_AfterUpdate() throws Exception {
     Cipher c = Cipher.getInstance(cipher);
@@ -90,6 +93,7 @@ public class AeadCipherTest {
    * Check that two AAD updates are equivalent to one.
    * http://b/27371173
    */
+  @Ignore("not supported by Tongsuo")
   @Test
   public void testUpdateAAD_Twice() throws Exception {
     Key key = newKey();
@@ -114,6 +118,7 @@ public class AeadCipherTest {
     assertEquals(Arrays.toString(c1.doFinal()), Arrays.toString(c2.doFinal()));
   }
 
+  @Ignore("not supported by Tongsuo")
   @Test
   public void testUpdateAAD_ByteBuffer() throws Exception {
     Key key = newKey();
@@ -150,6 +155,7 @@ public class AeadCipherTest {
     assertEquals(Arrays.toString(c1Final), Arrays.toString(c3Final));
   }
 
+  @Ignore("not supported by Tongsuo")
   @Test
   public void testUpdateAAD_ByteBuffer_MultipleUpdates() throws Exception {
     Key key = newKey();
@@ -193,6 +199,7 @@ public class AeadCipherTest {
     assertEquals(Arrays.toString(c1Final), Arrays.toString(c3Final));
   }
 
+  @Ignore("not supported by Tongsuo")
   @Test
   public void testUpdateAAD_ByteBuffer_MixedCalls() throws Exception {
     Key key = newKey();
@@ -235,6 +242,7 @@ public class AeadCipherTest {
     assertEquals(Arrays.toString(c1Final), Arrays.toString(c3Final));
   }
 
+  @Ignore("not supported by Tongsuo")
   @Test
   public void testUpdateAAD_ByteBuffer_Unequal() throws Exception {
     Key key = newKey();
@@ -273,6 +281,7 @@ public class AeadCipherTest {
    * Check that encryption with old and new instances update correctly.
    * http://b/27324690
    */
+  @Ignore("not supported by Tongsuo")
   @Test
   public void testReuse() throws Exception {
     Key key = newKey();

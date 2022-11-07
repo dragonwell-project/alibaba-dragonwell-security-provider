@@ -55,6 +55,8 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.cert.CertificateException;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 /**
  * Utility methods for SSL packet processing. Copied from the Netty project.
  * <p>
@@ -178,6 +180,9 @@ final class SSLUtils {
     /** Key type: Elliptic Curve certificate. */
     private static final String KEY_TYPE_EC = "EC";
 
+    /** Key type: SM2 certificate. */
+    private static final String KEY_TYPE_SM2 = "SM2";
+
     static X509Certificate[] decodeX509CertificateChain(byte[][] certChain)
             throws java.security.cert.CertificateException {
         CertificateFactory certificateFactory = getCertificateFactory();
@@ -191,7 +196,7 @@ final class SSLUtils {
 
     private static CertificateFactory getCertificateFactory() {
         try {
-            return CertificateFactory.getInstance("X.509");
+            return CertificateFactory.getInstance("X.509",new BouncyCastleProvider());
         } catch (java.security.cert.CertificateException e) {
             return null;
         }
@@ -251,6 +256,8 @@ final class SSLUtils {
                 return KEY_TYPE_RSA;
             case NativeConstants.EVP_PKEY_EC:
                 return KEY_TYPE_EC;
+            case NativeConstants.EVP_PKEY_SM2:
+                return KEY_TYPE_SM2;
             default:
                 return null;
         }

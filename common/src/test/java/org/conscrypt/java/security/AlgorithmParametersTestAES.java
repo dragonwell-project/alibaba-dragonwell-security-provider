@@ -22,6 +22,7 @@ import java.security.AlgorithmParameters;
 import java.security.Provider;
 import javax.crypto.spec.IvParameterSpec;
 import org.conscrypt.TestUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -45,6 +46,7 @@ public class AlgorithmParametersTestAES extends AbstractAlgorithmParametersTest 
         super("AES", new AlgorithmParameterSymmetricHelper("AES", "CBC/PKCS5PADDING", 128), new IvParameterSpec(parameterData));
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testEncoding() throws Exception {
         ServiceTester.test("AlgorithmParameters")

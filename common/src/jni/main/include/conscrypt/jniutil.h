@@ -19,6 +19,7 @@
 
 #include <jni.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include <conscrypt/logging.h>
 #include <conscrypt/macros.h>
@@ -238,8 +239,8 @@ extern int throwInvalidAlgorithmParameterException(JNIEnv* env, const char* mess
 extern int throwForAsn1Error(JNIEnv* env, int reason, const char* message,
                              int (*defaultThrow)(JNIEnv*, const char*));
 
-extern int throwForCipherError(JNIEnv* env, int reason, const char* message,
-                               int (*defaultThrow)(JNIEnv*, const char*));
+//extern int throwForCipherError(JNIEnv* env, int reason, const char* message,
+//                               int (*defaultThrow)(JNIEnv*, const char*));
 
 extern int throwForEvpError(JNIEnv* env, int reason, const char* message,
                             int (*defaultThrow)(JNIEnv*, const char*));

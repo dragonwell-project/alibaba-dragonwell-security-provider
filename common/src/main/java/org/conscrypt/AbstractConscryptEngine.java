@@ -32,7 +32,7 @@ abstract class AbstractConscryptEngine extends SSLEngine {
     /**
      * Returns the maximum overhead, in bytes, of sealing a record with SSL.
      */
-    abstract int maxSealOverhead();
+//     abstract int maxSealOverhead();
 
     /**
      * Enables/disables TLS Channel ID for this server engine.

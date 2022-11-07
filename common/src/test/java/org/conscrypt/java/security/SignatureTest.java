@@ -72,6 +72,7 @@ import org.conscrypt.Conscrypt;
 import org.conscrypt.TestUtils;
 import org.conscrypt.testing.BrokenProvider;
 import org.conscrypt.testing.OpaqueProvider;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -2781,6 +2782,7 @@ public class SignatureTest {
 
     // Tests that an opaque key will be accepted by the ECDSA signature and will delegate to a
     // functioning alternative provider
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_NONEwithECDSA_OpaqueKey() throws Exception {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
@@ -2808,6 +2810,7 @@ public class SignatureTest {
     // Tests that an opaque key will be accepted by the ECDSA signature and that a broken
     // alternative provider that throws UnsupportedOperationException will be skipped and
     // a functioning provider that follows will work.
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_NONEwithECDSA_OpaqueKey_BrokenProvider() throws Exception {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");

@@ -18,6 +18,7 @@
 #define CONSCRYPT_SSL_ERROR_H_
 
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 
 namespace conscrypt {
 

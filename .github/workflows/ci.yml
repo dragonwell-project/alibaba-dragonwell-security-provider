@@ -1,6 +1,7 @@
 name: Continuous integration
 
 on:
+  workflow_dispatch:
   push:
   pull_request:
   schedule:
@@ -8,36 +9,14 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  boringssl_clone:
-    # This step ensures that all builders have the same version of BoringSSL
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Clone BoringSSL repo
-        run: |
-          git clone --depth 1 --filter=blob:none --no-checkout https://github.com/google/boringssl.git "${{ runner.temp }}/boringssl"
-          echo Using BoringSSL commit: $(cd "${{ runner.temp }}/boringssl"; git rev-parse HEAD)
-
-      - name: Archive BoringSSL source
-        uses: actions/upload-artifact@v1
-        with:
-          name: boringssl-source
-          path: ${{ runner.temp }}/boringssl
-
-  build:
-    needs: boringssl_clone
-
+  build-with-tongsuo-831:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest]
         include:
           - platform: ubuntu-latest
             tools_url: https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
-          - platform: macos-latest
-            tools_url: https://dl.google.com/android/repository/sdk-tools-darwin-4333796.zip
-          - platform: windows-latest
-            tools_url: https://dl.google.com/android/repository/sdk-tools-windows-4333796.zip
 
     runs-on: ${{ matrix.platform }}
 
@@ -55,10 +34,23 @@ jobs:
       - name: Set runner-specific environment variables
         shell: bash
         run: |
-          echo "ANDROID_HOME=${{ runner.temp }}/android-sdk" >> $GITHUB_ENV
-          echo "BORINGSSL_HOME=${{ runner.temp }}/boringssl" >> $GITHUB_ENV
-          echo "SDKMANAGER=${{ runner.temp }}/android-sdk/tools/bin/sdkmanager" >> $GITHUB_ENV
-          echo "M2_REPO=${{ runner.temp }}/m2" >> $GITHUB_ENV
+          echo "ANDROID_HOME=${RUNNER_TEMP}/android-sdk" >> $GITHUB_ENV
+          echo "TONGSUO_HOME=${RUNNER_TEMP}/install" >> $GITHUB_ENV
+          echo "SDKMANAGER=${RUNNER_TEMP}/android-sdk/tools/bin/sdkmanager" >> $GITHUB_ENV
+
+      - name: checkout Tongsuo 8.3.1
+        uses: actions/checkout@v2
+        with:
+          repository: Tongsuo-Project/Tongsuo
+          ref: 8.3-stable
+          path: Tongsuo831
+
+      - name: Build Tongsuo831 on Linux
+        working-directory: ./Tongsuo831
+        run: |
+          ./config --prefix=$TONGSUO_HOME enable-weak-ssl-ciphers
+          make -s -j4
+          make install
 
       - uses: actions/checkout@v2
 
@@ -77,75 +69,6 @@ jobs:
             ninja-build \
             openjdk-8-jdk-headless \
             openjdk-11-jre-headless
-
-      - name: Setup macOS environment
-        if: runner.os == 'macOS'
-        run: |
-          brew update || echo update failed
-          brew install ninja || echo update failed
-
-      - name: install Go
-        uses: actions/setup-go@v1
-        with:
-          go-version: '1.13.2'
-
-      - name: Setup Windows environment
-        if: runner.os == 'Windows'
-        run: |
-          choco install nasm -y
-          choco install ninja -y
-
-      - name: Fetch BoringSSL source
-        uses: actions/download-artifact@v1
-        with:
-          name: boringssl-source
-          path: ${{ runner.temp }}/boringssl
-
-      - name: Checkout BoringSSL master branch
-        shell: bash
-        run: |
-          cd "$BORINGSSL_HOME"
-          git checkout --progress --force -B master
-
-      - name: Build BoringSSL 64-bit Linux and MacOS
-        if: runner.os != 'Windows'
-        env:
-          # For compatibility, but 10.15 target requires 16-byte stack alignment.
-          MACOSX_DEPLOYMENT_TARGET: 10.11
-        run: |
-          mkdir -p "$BORINGSSL_HOME/build64"
-          pushd "$BORINGSSL_HOME/build64"
-          cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -GNinja ..
-          ninja
-          popd
-
-      - name: Build BoringSSL 32-bit Linux
-        if: runner.os == 'Linux'
-        run: |
-          mkdir -p "$BORINGSSL_HOME/build32"
-          pushd "$BORINGSSL_HOME/build32"
-          cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -DCMAKE_ASM_FLAGS="-m32 -msse2" -DCMAKE_CXX_FLAGS="-m32 -msse2" -DCMAKE_C_FLAGS="-m32 -msse2" -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=x86 -GNinja ..
-          ninja
-          popd
-
-      - name: Build BoringSSL 64 and 32-bit Windows
-        if: runner.os == 'Windows'
-        run: |
-          cd $Env:BORINGSSL_HOME
-
-          & $Env:GITHUB_WORKSPACE\.github\workflows\vsenv.ps1 -arch x86 -hostArch x64
-          mkdir build32
-          cd build32
-          cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE=/MT -DCMAKE_CXX_FLAGS_RELEASE=/MT -GNinja ..
-          ninja
-          cd ..
-
-          & $Env:GITHUB_WORKSPACE\.github\workflows\vsenv.ps1 -arch x64 -hostArch x64
-          mkdir build64
-          cd build64
-          cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE=/MT -DCMAKE_CXX_FLAGS_RELEASE=/MT -GNinja ..
-          ninja
-          cd ..
 
       - name: Setup Android environment
         shell: bash
@@ -176,144 +99,7 @@ jobs:
         shell: bash
         run: ./gradlew check -PcheckErrorQueue
 
-      - name: Publish to local Maven repo
-        shell: bash
-        run: ./gradlew publishToMavenLocal -Dmaven.repo.local="$M2_REPO"
-
-      - name: Upload Maven respository
-        uses: actions/upload-artifact@v1
-        with:
-          name: m2repo-${{ runner.os }}
-          path: ${{ runner.temp }}/m2
-
       - name: Build test JAR with dependencies
         if: runner.os == 'Linux'
         shell: bash
         run: ./gradlew :conscrypt-openjdk:testJar -PcheckErrorQueue
-
-      - name: Upload test JAR with dependencies
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v2
-        with:
-          name: testjar
-          path: openjdk/build/libs/conscrypt-openjdk-*-tests.jar
-          if-no-files-found: error
-
-  uberjar:
-    needs: build
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set runner-specific environment variables
-        shell: bash
-        run: |
-          echo "M2_REPO=${{ runner.temp }}/m2" >> $GITHUB_ENV
-          echo "BORINGSSL_HOME=${{ runner.temp }}/boringssl" >> $GITHUB_ENV
-
-      - name: Fetch BoringSSL source
-        uses: actions/download-artifact@v1
-        with:
-          name: boringssl-source
-          path: ${{ runner.temp }}/boringssl
-
-      - name: Make fake BoringSSL directories
-        shell: bash
-        run: |
-          # TODO: remove this when the check is only performed when building.
-          # BoringSSL is not needed during the UberJAR build, but the
-          # assertion to check happens regardless of whether the project
-          # needs it.
-          mkdir -p "${{ runner.temp }}/boringssl/build64"
-          mkdir -p "${{ runner.temp }}/boringssl/include"
-
-      - name: Download Maven repository for Linux
-        uses: actions/download-artifact@v1
-        with:
-          name: m2repo-Linux
-          path: ${{ runner.temp }}/m2
-
-      - name: Download Maven repository for MacOS
-        uses: actions/download-artifact@v1
-        with:
-          name: m2repo-macOS
-          path: ${{ runner.temp }}/m2
-
-      - name: Download Maven repository for Windows
-        uses: actions/download-artifact@v1
-        with:
-          name: m2repo-Windows
-          path: ${{ runner.temp }}/m2
-
-      - name: Build UberJAR with Gradle
-        shell: bash
-        run: |
-          ./gradlew :conscrypt-openjdk-uber:build -Dorg.conscrypt.openjdk.buildUberJar=true -Dmaven.repo.local="$M2_REPO"
-
-      - name: Publish UberJAR to Maven Local
-        shell: bash
-        run: |
-          ./gradlew :conscrypt-openjdk-uber:publishToMavenLocal -Dorg.conscrypt.openjdk.buildUberJar=true -Dmaven.repo.local="$M2_REPO"
-
-      - name: Upload Maven respository
-        uses: actions/upload-artifact@v1
-        with:
-          name: m2repo-uber
-          path: ${{ runner.temp }}/m2
-
-  openjdk-test:
-    needs: uberjar
-
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-        java: [8, 9, 11]
-        include:
-          - java: 8
-            suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
-          - java: 9
-            suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
-          - java: 11
-            suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
-
-    runs-on: ${{ matrix.platform }}
-
-    steps:
-      - name: Set up Java
-        uses: actions/setup-java@v1
-        with:
-          java-version: ${{ matrix.java }}
-
-      - name: Download UberJAR
-        uses: actions/download-artifact@v2
-        with:
-          name: m2repo-uber
-          path: m2
-
-      - name: Download Test JAR with Dependencies
-        uses: actions/download-artifact@v2
-        with:
-          name: testjar
-          path: testjar
-
-      - name: Download JUnit runner
-        shell: bash
-        run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.2:copy -Dartifact=org.junit.platform:junit-platform-console-standalone:1.6.2 -DoutputDirectory=. -Dmdep.stripVersion=true
-
-      - name: Run JUnit tests
-        shell: bash
-        run: |
-          DIR="$(find m2/org/conscrypt/conscrypt-openjdk-uber -maxdepth 1 -mindepth 1 -type d -print)"
-          VERSION="${DIR##*/}"
-          TESTJAR="$(find testjar -name '*-tests.jar')"
-          java -jar junit-platform-console-standalone.jar -cp "$DIR/conscrypt-openjdk-uber-$VERSION.jar:$TESTJAR" -n='${{ matrix.suite_class }}' --scan-classpath --reports-dir=results --fail-if-no-tests
-
-      - name: Archive test results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-results-${{ matrix.platform }}-${{ matrix.java }}
-          path: results

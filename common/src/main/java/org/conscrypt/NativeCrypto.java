@@ -746,6 +746,8 @@ public final class NativeCrypto {
             "TLS_AES_128_GCM_SHA256",
             "TLS_AES_256_GCM_SHA384",
             "TLS_CHACHA20_POLY1305_SHA256",
+            "TLS_SM4_GCM_SM3",
+            "TLS_SM4_CCM_SM3",
     };
 
     // SUPPORTED_TLS_1_2_CIPHER_SUITES_SET contains all the supported cipher suites for TLS 1.2,
@@ -809,7 +811,15 @@ public final class NativeCrypto {
         if (loadError == null) {
             // If loadError is not null, it means the native code was not loaded, so
             // get_cipher_names will throw UnsatisfiedLinkError.
-            String[] allCipherSuites = get_cipher_names("ALL:!DHE");
+            String[] allCipherSuites = get_cipher_names(
+                "ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:AES256-SHA"
+                + ":ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:AES128-SHA"
+                + ":DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384"
+                + ":ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"
+                + ":ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384"
+                + ":ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305"
+                + ":PSK-AES128-CBC-SHA:PSK-AES256-CBC-SHA:ECDHE-PSK-AES128-CBC-SHA"
+                + ":ECDHE-PSK-AES256-CBC-SHA:ECDHE-PSK-CHACHA20-POLY1305");
 
             // get_cipher_names returns an array where even indices are the standard name and odd
             // indices are the OpenSSL name.
@@ -818,16 +828,23 @@ public final class NativeCrypto {
                 throw new IllegalArgumentException(
                         "Invalid cipher list returned by get_cipher_names");
             }
-            SUPPORTED_TLS_1_2_CIPHER_SUITES = new String[size / 2 + 2];
+            ArrayList<String> names = new ArrayList<>();
             for (int i = 0; i < size; i += 2) {
                 String cipherSuite = cipherSuiteToJava(allCipherSuites[i]);
-                SUPPORTED_TLS_1_2_CIPHER_SUITES[i / 2] = cipherSuite;
-                SUPPORTED_TLS_1_2_CIPHER_SUITES_SET.add(cipherSuite);
 
+                if (SUPPORTED_TLS_1_3_CIPHER_SUITES_SET.contains(cipherSuite)) {
+                    continue;
+                }
+
+                names.add(cipherSuite);
+                SUPPORTED_TLS_1_2_CIPHER_SUITES_SET.add(cipherSuite);
                 SUPPORTED_LEGACY_CIPHER_SUITES_SET.add(allCipherSuites[i + 1]);
             }
-            SUPPORTED_TLS_1_2_CIPHER_SUITES[size / 2] = TLS_EMPTY_RENEGOTIATION_INFO_SCSV;
-            SUPPORTED_TLS_1_2_CIPHER_SUITES[size / 2 + 1] = TLS_FALLBACK_SCSV;
+
+            names.add(TLS_EMPTY_RENEGOTIATION_INFO_SCSV);
+            names.add(TLS_FALLBACK_SCSV);
+
+            SUPPORTED_TLS_1_2_CIPHER_SUITES = names.toArray(new String[names.size()]);
 
             HAS_AES_HARDWARE = EVP_has_aes_hardware() == 1;
         } else {
@@ -1125,7 +1142,9 @@ public final class NativeCrypto {
             if (SUPPORTED_TLS_1_2_CIPHER_SUITES_SET.contains(cipherSuites[i])) {
                 continue;
             }
-
+            if (SUPPORTED_TLS_1_3_CIPHER_SUITES_SET.contains(cipherSuites[i])) {
+                continue;
+            }
             // For backwards compatibility, it's allowed for |cipherSuite| to
             // be an OpenSSL-style cipher-suite name.
             if (SUPPORTED_LEGACY_CIPHER_SUITES_SET.contains(cipherSuites[i])) {
