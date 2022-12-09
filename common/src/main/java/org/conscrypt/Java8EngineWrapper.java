@@ -71,10 +71,10 @@ final class Java8EngineWrapper extends AbstractConscryptEngine {
         delegate.setBufferAllocator(bufferAllocator);
     }
 
-    @Override
-    int maxSealOverhead() {
-        return delegate.maxSealOverhead();
-    }
+    // @Override
+    // int maxSealOverhead() {
+    //     return delegate.maxSealOverhead();
+    // }
 
     @Override
     void setChannelIdEnabled(boolean enabled) {

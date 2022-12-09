@@ -77,14 +77,19 @@ public class SSLSessionContextTest {
 
         TestSSLSocketPair s = TestSSLSocketPair.create(newTestContext()).connect();
         if (isTls13()) {
-            assertSSLSessionContextSizeAtLeast(1, s.c);
+            assertSSLSessionContextSize(0, s.c);
         } else {
             assertSSLSessionContextSize(1, s.c);
         }
         Enumeration<byte[]> clientIds = s.c.clientContext.getClientSessionContext().getIds();
         Enumeration<byte[]> serverIds = s.c.serverContext.getServerSessionContext().getIds();
-        byte[] clientId = clientIds.nextElement();
-        assertEquals(32, clientId.length);
+        byte[] clientId = null;
+        if (isTls13()) {
+            assertFalse(clientIds.hasMoreElements());
+        } else {
+            clientId = clientIds.nextElement();
+            assertEquals(32, clientId.length);
+        }
         if (TestSSLContext.sslServerSocketSupportsSessionTickets()) {
             assertFalse(serverIds.hasMoreElements());
         } else {
@@ -120,9 +125,15 @@ public class SSLSessionContextTest {
         TestSSLSocketPair s = TestSSLSocketPair.create(newTestContext()).connect();
         SSLSessionContext client = s.c.clientContext.getClientSessionContext();
         SSLSessionContext server = s.c.serverContext.getServerSessionContext();
-        byte[] clientId = client.getIds().nextElement();
-        assertNotNull(client.getSession(clientId));
-        assertTrue(Arrays.equals(clientId, client.getSession(clientId).getId()));
+        if (isTls13()) {
+            // Note: TLSv1.3 client only creates a new session on arrival of the NewSessionTicket.
+            // Server has disabled NewSessionTicket in SSL_CTX_new.
+            assertFalse(client.getIds().hasMoreElements());
+        } else {
+            byte[] clientId = client.getIds().nextElement();
+            assertNotNull(client.getSession(clientId));
+            assertTrue(Arrays.equals(clientId, client.getSession(clientId).getId()));
+        }
         if (TestSSLContext.sslServerSocketSupportsSessionTickets()) {
             assertFalse(server.getIds().hasMoreElements());
         } else {
@@ -187,7 +198,7 @@ public class SSLSessionContextTest {
         assertEquals(expectedClientSessionCacheSize, client.getSessionCacheSize());
         assertEquals(expectedServerSessionCacheSize, server.getSessionCacheSize());
         if (isTls13()) {
-            assertSSLSessionContextSizeAtLeast(1, s.c);
+            assertSSLSessionContextSize(0, s.c);
         } else {
             assertSSLSessionContextSize(1, s.c);
         }
@@ -249,21 +260,21 @@ public class SSLSessionContextTest {
         toClose.add(
                 TestSSLSocketPair.create(c).connect(new String[] {cipherSuite1}, null).sockets());
         if (isTls13()) {
-            assertSSLSessionContextSizeAtLeast(1, c);
+            assertSSLSessionContextSize(0, c);
         } else {
             assertSSLSessionContextSize(1, c);
         }
         toClose.add(
                 TestSSLSocketPair.create(c).connect(new String[] {cipherSuite2}, null).sockets());
         if (isTls13()) {
-            assertSSLSessionContextSizeAtLeast(2, c);
+            assertSSLSessionContextSize(0, c);
         } else {
             assertSSLSessionContextSize(2, c);
         }
         toClose.add(
                 TestSSLSocketPair.create(c).connect(new String[] {cipherSuite3}, null).sockets());
         if (isTls13()) {
-            assertSSLSessionContextSizeAtLeast(3, c);
+            assertSSLSessionContextSize(0, c);
         } else {
             assertSSLSessionContextSize(3, c);
         }
@@ -272,20 +283,36 @@ public class SSLSessionContextTest {
         server.setSessionCacheSize(1);
         assertEquals(1, client.getSessionCacheSize());
         assertEquals(1, server.getSessionCacheSize());
-        assertSSLSessionContextSize(1, c);
+        if (isTls13()) {
+            assertSSLSessionContextSize(0, c);
+        } else {
+            assertSSLSessionContextSize(1, c);
+        }
+
         toClose.add(
                 TestSSLSocketPair.create(c).connect(new String[] {cipherSuite1}, null).sockets());
-        assertSSLSessionContextSize(1, c);
+        if (isTls13()) {
+            assertSSLSessionContextSize(0, c);
+        } else {
+            assertSSLSessionContextSize(1, c);
+        }
 
         client.setSessionCacheSize(2);
         server.setSessionCacheSize(2);
         toClose.add(
                 TestSSLSocketPair.create(c).connect(new String[] {cipherSuite2}, null).sockets());
-        assertSSLSessionContextSize(2, c);
+        if (isTls13()) {
+            assertSSLSessionContextSize(0, c);
+        } else {
+            assertSSLSessionContextSize(2, c);
+        }
         toClose.add(
                 TestSSLSocketPair.create(c).connect(new String[] {cipherSuite3}, null).sockets());
-        assertSSLSessionContextSize(2, c);
-
+        if (isTls13()) {
+            assertSSLSessionContextSize(0, c);
+        } else {
+            assertSSLSessionContextSize(2, c);
+        }
         for (SSLSocket[] pair : toClose) {
             for (SSLSocket s : pair) {
                 s.close();
@@ -341,7 +368,7 @@ public class SSLSessionContextTest {
 
         TestSSLSocketPair s = TestSSLSocketPair.create(newTestContext()).connect();
         if (isTls13()) {
-            assertSSLSessionContextSizeAtLeast(1, s.c);
+            assertSSLSessionContextSize(0, s.c);
         } else {
             assertSSLSessionContextSize(1, s.c);
         }

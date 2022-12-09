@@ -59,6 +59,8 @@ v1.0-1.3 are all enabled; the others return a context with TLS v1.0-1.2 enabled.
   * `TLS_AES_128_GCM_SHA256`
   * `TLS_AES_256_GCM_SHA384`
   * `TLS_CHACHA20_POLY1305_SHA256`
+  * `TLS_SM4_GCM_SM3`
+  * `TLS_SM4_CCM_SM3`
 
 The above cipher suites are enabled by default when the associated version of
 the protocol is enabled.  The TLS 1.3 cipher suites cannot be customized; they

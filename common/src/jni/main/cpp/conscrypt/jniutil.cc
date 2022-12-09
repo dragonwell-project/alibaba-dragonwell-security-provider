@@ -110,23 +110,28 @@ void init(JavaVM* vm, JNIEnv* env) {
     buffer_limitMethod = getMethodRef(env, bufferClass, "limit", "()I");
     buffer_isDirectMethod = getMethodRef(env, bufferClass, "isDirect", "()Z");
     sslHandshakeCallbacks_verifyCertificateChain =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "verifyCertificateChain", "([[BLjava/lang/String;)V");
+            getMethodRef(env, sslHandshakeCallbacksClass, "verifyCertificateChain",
+                         "([[BLjava/lang/String;)V");
     sslHandshakeCallbacks_onSSLStateChange =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "onSSLStateChange", "(II)V");
+            getMethodRef(env, sslHandshakeCallbacksClass, "onSSLStateChange", "(II)V");
     sslHandshakeCallbacks_clientCertificateRequested =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "clientCertificateRequested", "([B[I[[B)V");
+            getMethodRef(env, sslHandshakeCallbacksClass, "clientCertificateRequested",
+                         "([B[I[[B)V");
     sslHandshakeCallbacks_serverCertificateRequested =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "serverCertificateRequested", "()V");
+            getMethodRef(env, sslHandshakeCallbacksClass, "serverCertificateRequested",
+                         "()V");
     sslHandshakeCallbacks_clientPSKKeyRequested =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "clientPSKKeyRequested", "(Ljava/lang/String;[B[B)I");
+            getMethodRef(env, sslHandshakeCallbacksClass, "clientPSKKeyRequested",
+                         "(Ljava/lang/String;[B[B)I");
     sslHandshakeCallbacks_serverPSKKeyRequested =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "serverPSKKeyRequested", "(Ljava/lang/String;Ljava/lang/String;[B)I");
+            getMethodRef(env, sslHandshakeCallbacksClass, "serverPSKKeyRequested",
+                         "(Ljava/lang/String;Ljava/lang/String;[B)I");
     sslHandshakeCallbacks_onNewSessionEstablished =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "onNewSessionEstablished", "(J)V");
+            getMethodRef(env, sslHandshakeCallbacksClass, "onNewSessionEstablished", "(J)V");
     sslHandshakeCallbacks_serverSessionRequested =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "serverSessionRequested", "([B)J");
+            getMethodRef(env, sslHandshakeCallbacksClass, "serverSessionRequested", "([B)J");
     sslHandshakeCallbacks_selectApplicationProtocol =
-	    getMethodRef(env, sslHandshakeCallbacksClass, "selectApplicationProtocol", "([B)I");
+            getMethodRef(env, sslHandshakeCallbacksClass, "selectApplicationProtocol", "([B)I");
     cryptoUpcallsClass_rawSignMethod = env->GetStaticMethodID(cryptoUpcallsClass,
                                                      "ecSignDigestWithPrivateKey",
                                                      "(Ljava/security/PrivateKey;[B)[B");
@@ -140,8 +145,8 @@ void init(JavaVM* vm, JNIEnv* env) {
         env->FatalError("Could not find rsaSignDigestWithPrivateKey");
     }
     cryptoUpcallsClass_rsaDecryptMethod = env->GetStaticMethodID(cryptoUpcallsClass,
-						     "rsaDecryptWithPrivateKey",
-						     "(Ljava/security/PrivateKey;I[B)[B");
+                                              "rsaDecryptWithPrivateKey",
+                                              "(Ljava/security/PrivateKey;I[B)[B");
     if (cryptoUpcallsClass_rsaDecryptMethod == nullptr) {
         env->FatalError("Could not find rsaDecryptWithPrivateKey");
     }
@@ -305,34 +310,34 @@ int throwForAsn1Error(JNIEnv* env, int reason, const char* message,
     return defaultThrow(env, message);
 }
 
-int throwForCipherError(JNIEnv* env, int reason, const char* message,
-                        int (*defaultThrow)(JNIEnv*, const char*)) {
-    switch (reason) {
-        case CIPHER_R_BAD_DECRYPT:
-            return throwBadPaddingException(env, message);
-            break;
-        case CIPHER_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH:
-        case CIPHER_R_WRONG_FINAL_BLOCK_LENGTH:
-            return throwIllegalBlockSizeException(env, message);
-            break;
-        // TODO(davidben): Remove these ifdefs after
-        // https://boringssl-review.googlesource.com/c/boringssl/+/35565 has
-        // rolled out to relevant BoringSSL copies.
-#if defined(CIPHER_R_BAD_KEY_LENGTH)
-        case CIPHER_R_BAD_KEY_LENGTH:
-#endif
-#if defined(CIPHER_R_UNSUPPORTED_KEY_SIZE)
-        case CIPHER_R_UNSUPPORTED_KEY_SIZE:
-#endif
-        case CIPHER_R_INVALID_KEY_LENGTH:
-            return throwInvalidKeyException(env, message);
-            break;
-        case CIPHER_R_BUFFER_TOO_SMALL:
-            return throwShortBufferException(env, message);
-            break;
-    }
-    return defaultThrow(env, message);
-}
+//int throwForCipherError(JNIEnv* env, int reason, const char* message,
+//                        int (*defaultThrow)(JNIEnv*, const char*)) {
+//    switch (reason) {
+//        case CIPHER_R_BAD_DECRYPT:
+//            return throwBadPaddingException(env, message);
+//            break;
+//        case CIPHER_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH:
+//        case CIPHER_R_WRONG_FINAL_BLOCK_LENGTH:
+//            return throwIllegalBlockSizeException(env, message);
+//            break;
+//        // TODO(davidben): Remove these ifdefs after
+//        // https://boringssl-review.googlesource.com/c/boringssl/+/35565 has
+//        // rolled out to relevant BoringSSL copies.
+//#if defined(CIPHER_R_BAD_KEY_LENGTH)
+//        case CIPHER_R_BAD_KEY_LENGTH:
+//#endif
+//#if defined(CIPHER_R_UNSUPPORTED_KEY_SIZE)
+//        case CIPHER_R_UNSUPPORTED_KEY_SIZE:
+//#endif
+//        case CIPHER_R_INVALID_KEY_LENGTH:
+//            return throwInvalidKeyException(env, message);
+//            break;
+//        case CIPHER_R_BUFFER_TOO_SMALL:
+//            return throwShortBufferException(env, message);
+//            break;
+//    }
+//    return defaultThrow(env, message);
+//}
 
 int throwForEvpError(JNIEnv* env, int reason, const char* message,
                      int (*defaultThrow)(JNIEnv*, const char*)) {
@@ -410,7 +415,7 @@ void throwExceptionFromBoringSSLError(JNIEnv* env, CONSCRYPT_UNUSED const char* 
         ERR_error_string_n(error, message, sizeof(message));
         int library = ERR_GET_LIB(error);
         int reason = ERR_GET_REASON(error);
-        JNI_TRACE("BoringSSL error in %s error=%lx library=%x reason=%x (%s:%d): %s %s", location,
+        JNI_TRACE("Tongsuo error in %s error=%lx library=%x reason=%x (%s:%d): %s %s", location,
                   error, library, reason, file, line, message,
                   (flags & ERR_TXT_STRING) ? data : "(no data)");
         switch (library) {
@@ -420,9 +425,9 @@ void throwExceptionFromBoringSSLError(JNIEnv* env, CONSCRYPT_UNUSED const char* 
             case ERR_LIB_ASN1:
                 throwForAsn1Error(env, reason, message, defaultThrow);
                 break;
-            case ERR_LIB_CIPHER:
-                throwForCipherError(env, reason, message, defaultThrow);
-                break;
+//            case ERR_LIB_CIPHER:
+//                throwForCipherError(env, reason, message, defaultThrow);
+//                break;
             case ERR_LIB_EVP:
                 throwForEvpError(env, reason, message, defaultThrow);
                 break;

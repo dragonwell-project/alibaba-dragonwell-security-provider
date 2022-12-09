@@ -23,6 +23,7 @@ import java.security.AlgorithmParameters;
 import java.security.Provider;
 import javax.crypto.spec.GCMParameterSpec;
 import org.conscrypt.TestUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -58,6 +59,7 @@ public class AlgorithmParametersTestGCM extends AbstractAlgorithmParametersTest 
         super("GCM", new AlgorithmParameterSymmetricHelper("AES", "GCM/NOPADDING", 128), new GCMParameterSpec(TLEN, IV));
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testEncoding() throws Exception {
         ServiceTester.test("AlgorithmParameters")

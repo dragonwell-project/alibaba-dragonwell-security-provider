@@ -170,7 +170,7 @@ final class ConscryptEngine extends AbstractConscryptEngine implements NativeCry
      */
     private OpenSSLKey channelIdPrivateKey;
 
-    private int maxSealOverhead;
+    // private int maxSealOverhead;
 
     private HandshakeListener handshakeListener;
 
@@ -239,10 +239,10 @@ final class ConscryptEngine extends AbstractConscryptEngine implements NativeCry
     /**
      * Returns the maximum overhead, in bytes, of sealing a record with SSL.
      */
-    @Override
-    int maxSealOverhead() {
-        return maxSealOverhead;
-    }
+    // @Override
+    // int maxSealOverhead() {
+    //     return maxSealOverhead;
+    // }
 
     /**
      * Enables/disables TLS Channel ID for this server engine.
@@ -437,7 +437,7 @@ final class ConscryptEngine extends AbstractConscryptEngine implements NativeCry
                 }
             }
 
-            maxSealOverhead = ssl.getMaxSealOverhead();
+            // maxSealOverhead = ssl.getMaxSealOverhead();
             handshake();
             releaseResources = false;
         } catch (IOException e) {

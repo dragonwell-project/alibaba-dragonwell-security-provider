@@ -58,15 +58,10 @@ public class KeyFactoryTestRSA extends
     }
 
     @Test
-    public void getEncodedFailsWhenCrtValuesMissing() throws Exception {
+    public void getEncodedWhenCrtValuesMissing() throws Exception {
         PrivateKey privateKey = getPrivateKey();
-        try {
-            // Key has only modulus and private exponent so can't be encoded as PKCS#8
-            privateKey.getEncoded();
-            fail();
-        } catch (RuntimeException e) {
-            // Expected
-        }
+        // Key can ben encoded as PKCS#8 with CRT values missing
+        privateKey.getEncoded();
     }
 
     @Test

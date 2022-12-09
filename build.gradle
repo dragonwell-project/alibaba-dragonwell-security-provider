@@ -65,15 +65,30 @@ subprojects {
             throw new GradleException("Unsupported os: " + os.name)
         }
 
-        if (project.hasProperty("boringsslHome")) {
-            boringsslHome = project.property("boringsslHome")
-        } else {
-            boringsslHome = "$System.env.BORINGSSL_HOME"
+        build64Bit = false
+        build32Bit = false
+
+        if (project.hasProperty("64")) {
+            build64Bit = true
         }
 
-        boringsslIncludeDir = normalizePath("$boringsslHome/include")
-        boringssl32BuildDir = normalizePath("$boringsslHome/build32")
-        boringssl64BuildDir = normalizePath("$boringsslHome/build64")
+        if (project.hasProperty("32")) {
+            build32Bit = true
+        }
+
+        if (build64Bit == false && build32Bit == false) {
+            build64Bit = true
+        }
+
+        if (project.hasProperty("tongsuoHome")) {
+            tongsuoHome = project.property("tongsuoHome")
+        } else {
+            tongsuoHome = "$System.env.TONGSUO_HOME"
+        }
+
+        tongsuoIncludeDir = normalizePath("$tongsuoHome/include")
+        tongsuoLibDir = normalizePath("$tongsuoHome/lib")
+        tongsuoLib64Dir = normalizePath("$tongsuoHome/lib64")
 
         if (project.hasProperty("jdkHome")) {
             jdkHome = project.property("jdkHome")
@@ -84,19 +99,17 @@ subprojects {
         // Needs to be binary compatible with androidMinSdkVersion
         androidMinJavaVersion = JavaVersion.VERSION_1_7
 
-        build32Bit = file("$boringssl32BuildDir").exists()
-        build64Bit = file("$boringssl64BuildDir").exists()
-
         // Ensure the environment is configured properly.
-        assert file("$boringsslHome").exists()
-        assert file("$boringsslIncludeDir").exists()
         assert build32Bit || build64Bit
+        assert file("$tongsuoHome").exists()
+        assert file("$tongsuoIncludeDir").exists()
+        assert file("$tongsuoLibDir").exists() || file("$tongsuoLib64Dir").exists()
         assert file("$jdkHome").exists()
         assert file("$jdkIncludeDir").exists()
 
         // Get the commit hash for BoringSSL.
-        boringSslGit = org.ajoberstar.grgit.Grgit.open(dir: boringsslHome)
-        boringSslVersion = boringSslGit.head().id
+//         boringSslGit = org.ajoberstar.grgit.Grgit.open(dir: boringsslHome)
+//         boringSslVersion = boringSslGit.head().id
 
         // Allow the java executable to be specified via env/property for each architecture.
         javaExecutable32 = System.getProperty('javaExecutable32', System.env.CONSCRYPT_JAVA_EXECUTABLE_32)
@@ -160,7 +173,7 @@ subprojects {
         property("org.conscrypt.version.major", parsedVersion.getMajor())
         property("org.conscrypt.version.minor", parsedVersion.getMinor())
         property("org.conscrypt.version.patch", parsedVersion.getMicro())
-        property("org.conscrypt.boringssl.version", boringSslVersion)
+//         property("org.conscrypt.boringssl.version", boringSslVersion)
         outputFile "build/generated/resources/org/conscrypt/conscrypt.properties"
     }
 

@@ -32,6 +32,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import org.conscrypt.TestUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -108,6 +109,7 @@ public class AlgorithmParametersPSSTest {
         assertPSSParameterSpecEquals(WEIRD_SPEC, params.getParameterSpec(PSSParameterSpec.class));
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testInitWithDerEncoded() throws Exception {
         assertInitWithDerEncoded(WEIRD_SPEC_DER_ENCODED, WEIRD_SPEC);
@@ -138,6 +140,7 @@ public class AlgorithmParametersPSSTest {
         } catch (IOException expected) {}
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testGetEncoded() throws Exception {
         assertGetEncoded(WEIRD_SPEC, WEIRD_SPEC_DER_ENCODED);
@@ -153,6 +156,7 @@ public class AlgorithmParametersPSSTest {
         assertTrue(Arrays.equals(encoded, params.getEncoded()));
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testGetEncodedWithBrokenInput() throws Exception {
         AlgorithmParameters params = AlgorithmParameters.getInstance("PSS");

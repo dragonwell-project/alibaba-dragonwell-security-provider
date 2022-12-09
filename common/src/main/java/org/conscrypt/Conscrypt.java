@@ -564,9 +564,9 @@ public final class Conscrypt {
     /**
      * Returns the maximum overhead, in bytes, of sealing a record with SSL.
      */
-    public static int maxSealOverhead(SSLEngine engine) {
-        return toConscrypt(engine).maxSealOverhead();
-    }
+    // public static int maxSealOverhead(SSLEngine engine) {
+    //     return toConscrypt(engine).maxSealOverhead();
+    // }
 
     /**
      * Sets a listener on the given engine for completion of the TLS handshake

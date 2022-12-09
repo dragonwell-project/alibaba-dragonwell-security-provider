@@ -16,8 +16,6 @@
 
 package org.conscrypt;
 
-import static org.conscrypt.NativeConstants.SSL_MODE_CBC_RECORD_SPLITTING;
-import static org.conscrypt.NativeConstants.SSL_MODE_ENABLE_FALSE_START;
 import static org.conscrypt.NativeConstants.SSL_OP_CIPHER_SERVER_PREFERENCE;
 import static org.conscrypt.NativeConstants.SSL_OP_NO_TICKET;
 import static org.conscrypt.NativeConstants.SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
@@ -83,6 +81,7 @@ import org.conscrypt.io.IoUtils;
 import org.conscrypt.java.security.StandardNames;
 import org.conscrypt.java.security.TestKeyStore;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -431,11 +430,13 @@ public class NativeCryptoTest {
         NativeCrypto.SSL_CTX_free(c, null);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test(expected = NullPointerException.class)
     public void SSL_set1_tls_channel_id_withNullChannelShouldThrow() throws Exception {
         NativeCrypto.SSL_set1_tls_channel_id(NULL, null, null);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test(expected = NullPointerException.class)
     public void SSL_set1_tls_channel_id_withNullKeyShouldThrow() throws Exception {
         initChannelIdKey();
@@ -450,6 +451,7 @@ public class NativeCryptoTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSL_use_PrivateKey_for_tls_channel_id() throws Exception {
         initChannelIdKey();
@@ -488,18 +490,6 @@ public class NativeCryptoTest {
     public void test_SSL_set_mode_and_clear_mode() throws Exception {
         long c = NativeCrypto.SSL_CTX_new();
         long s = NativeCrypto.SSL_new(c, null);
-        // check SSL_MODE_ENABLE_FALSE_START on by default for BoringSSL
-        assertEquals(SSL_MODE_ENABLE_FALSE_START,
-                NativeCrypto.SSL_get_mode(s, null) & SSL_MODE_ENABLE_FALSE_START);
-        // check SSL_MODE_CBC_RECORD_SPLITTING off by default
-        assertEquals(0, NativeCrypto.SSL_get_mode(s, null) & SSL_MODE_CBC_RECORD_SPLITTING);
-
-        // set SSL_MODE_ENABLE_FALSE_START on
-        NativeCrypto.SSL_set_mode(s, null, SSL_MODE_ENABLE_FALSE_START);
-        assertTrue((NativeCrypto.SSL_get_mode(s, null) & SSL_MODE_ENABLE_FALSE_START) != 0);
-        // clear SSL_MODE_ENABLE_FALSE_START off
-        NativeCrypto.SSL_clear_mode(s, null, SSL_MODE_ENABLE_FALSE_START);
-        assertTrue((NativeCrypto.SSL_get_mode(s, null) & SSL_MODE_ENABLE_FALSE_START) == 0);
 
         NativeCrypto.SSL_free(s, null);
         NativeCrypto.SSL_CTX_free(c, null);
@@ -623,7 +613,7 @@ public class NativeCryptoTest {
                 // never standardized
                 "EXP1024-DES-CBC-SHA",
                 // IDEA
-                "IDEA-CBC-SHA", "IDEA-CBC-MD5"};
+                "IDEA-CBC-MD5"};
 
         for (String illegal : illegals) {
             try {
@@ -1202,7 +1192,11 @@ public class NativeCryptoTest {
     @Test
     public void test_SSL_do_handshake_optional_client_certificate() throws Exception {
         // optional client certificate case
+        final long serverContext = NativeCrypto.SSL_CTX_new();
         final ServerSocket listener = newServerSocket();
+        // Note: the session will not be cached and new_session_cb will not be called if TLS server wants
+        // to verify the client certificate and session id context is not set.
+        NativeCrypto.SSL_CTX_set_session_id_context(serverContext, null, new byte[32]);
 
         Hooks cHooks = new Hooks() {
             @Override
@@ -1215,6 +1209,11 @@ public class NativeCryptoTest {
         };
         Hooks sHooks = new ServerHooks(getServerPrivateKey(), getEncodedServerCertificates()) {
             @Override
+            public long getContext() throws SSLException {
+                return serverContext;
+            }
+
+            @Override
             public long beforeHandshake(long c) throws SSLException {
                 long s = super.beforeHandshake(c);
                 NativeCrypto.SSL_set_client_CA_list(s, null, getCaPrincipals());
@@ -1223,8 +1222,7 @@ public class NativeCryptoTest {
             }
         };
         Future<TestSSLHandshakeCallbacks> client = handshake(listener, 0, true, cHooks, null, null);
-        Future<TestSSLHandshakeCallbacks> server =
-                handshake(listener, 0, false, sHooks, null, null);
+        Future<TestSSLHandshakeCallbacks> server = handshake(listener, 0, false, sHooks, null, null);
         TestSSLHandshakeCallbacks clientCallback = client.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         TestSSLHandshakeCallbacks serverCallback = server.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertTrue(clientCallback.verifyCertificateChainCalled);
@@ -1331,6 +1329,7 @@ public class NativeCryptoTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSL_do_handshake_with_channel_id_normal() throws Exception {
         initChannelIdKey();
@@ -1370,6 +1369,7 @@ public class NativeCryptoTest {
         assertEqualByteArrays(CHANNEL_ID, sHooks.channelIdAfterHandshake);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSL_do_handshake_with_channel_id_not_supported_by_server() throws Exception {
         initChannelIdKey();
@@ -1409,6 +1409,7 @@ public class NativeCryptoTest {
         assertNull(sHooks.channelIdAfterHandshake);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSL_do_handshake_with_channel_id_not_enabled_by_client() throws Exception {
         initChannelIdKey();
@@ -1517,7 +1518,7 @@ public class NativeCryptoTest {
         assertContains(cHooks.negotiatedCipherSuite, "PSK");
         assertEquals(cHooks.negotiatedCipherSuite, sHooks.negotiatedCipherSuite);
         assertEquals(sHooks.pskIdentityHint, clientCallback.clientPSKKeyRequestedIdentityHint);
-        assertEquals(sHooks.pskIdentityHint, serverCallback.serverPSKKeyRequestedIdentityHint);
+        assertNull(serverCallback.serverPSKKeyRequestedIdentityHint);
         assertEquals(cHooks.pskIdentity, serverCallback.serverPSKKeyRequestedIdentity);
         assertFalse(clientCallback.serverCertificateRequestedInvoked);
         assertTrue(serverCallback.serverCertificateRequestedInvoked);
@@ -1560,7 +1561,7 @@ public class NativeCryptoTest {
         assertContains(cHooks.negotiatedCipherSuite, "PSK");
         assertEquals(cHooks.negotiatedCipherSuite, sHooks.negotiatedCipherSuite);
         assertEquals(sHooks.pskIdentityHint, clientCallback.clientPSKKeyRequestedIdentityHint);
-        assertEquals(sHooks.pskIdentityHint, serverCallback.serverPSKKeyRequestedIdentityHint);
+        assertEquals(null, serverCallback.serverPSKKeyRequestedIdentityHint);
         assertEquals(cHooks.pskIdentity, serverCallback.serverPSKKeyRequestedIdentity);
     }
 
@@ -1695,6 +1696,7 @@ public class NativeCryptoTest {
         assertTrue(serverCallback.handshakeCompletedCalled);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSL_do_handshake_with_sct_extension() throws Exception {
         // Fake SCT extension has a length of overall extension (unsigned 16-bit).
@@ -1868,11 +1870,13 @@ public class NativeCryptoTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test(expected = NullPointerException.class)
     public void SSL_set_session_creation_enabled_withNullShouldThrow() throws Exception {
         NativeCrypto.SSL_set_session_creation_enabled(NULL, null, false);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSL_set_session_creation_enabled() throws Exception {
         long c = NativeCrypto.SSL_CTX_new();

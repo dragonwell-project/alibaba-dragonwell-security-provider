@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
+
+link_directories(BEFORE ${TONGSUO_HOME}/lib/)
+
 add_library(conscrypt_jni
             SHARED
             ../common/src/jni/main/cpp/conscrypt/compatibility_close_monitor.cc
@@ -9,15 +12,13 @@ add_library(conscrypt_jni
             )
 include_directories(../common/src/jni/main/include/
                     ../common/src/jni/unbundled/include/
-                    ${BORINGSSL_HOME}/include)
+                    ${TONGSUO_HOME}/include/)
 
 find_library(android-log-lib log)
 target_link_libraries(conscrypt_jni ${android-log-lib} ssl crypto)
 
 add_definitions(-DANDROID
                 -fvisibility=hidden
-                -DBORINGSSL_SHARED_LIBRARY
-                -DBORINGSSL_IMPLEMENTATION
                 -DOPENSSL_SMALL
                 -D_XOPEN_SOURCE=700
                 -Wno-unused-parameter
@@ -30,7 +31,8 @@ add_definitions(-DANDROID
                 # TODO: Remove these when the NDK no longer includes a version that has
                 # -Wtautological-constant-compare enabled as part of -Wall
                 -Wno-tautological-constant-compare
-                -Wtautological-constant-out-of-range-compare)
+                -Wtautological-constant-out-of-range-compare
+                -Wno-deprecated-declarations)
 
 if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64")
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -march=armv8-a+crypto")
