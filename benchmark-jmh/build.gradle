@@ -6,11 +6,11 @@ apply plugin: 'idea'
 
 description = 'Conscrypt: JMH on OpenJDK Benchmarks'
 
-evaluationDependsOn(':conscrypt-openjdk')
+evaluationDependsOn(':tongsuo-openjdk')
 
 ext {
-    preferredSourceSet = project(':conscrypt-openjdk').preferredSourceSet
-    preferredNativeFileDir = project(':conscrypt-openjdk').preferredNativeFileDir
+    preferredSourceSet = project(':tongsuo-openjdk').preferredSourceSet
+    preferredNativeFileDir = project(':tongsuo-openjdk').preferredNativeFileDir
 
     genDir = "${buildDir}/jmh-generated-classes"
     jmhInclude = System.getProperty('jmh.include')
@@ -69,10 +69,10 @@ sourceSets {
 }
 
 dependencies {
-    compile project(path: ":conscrypt-openjdk", configuration: "runtime"),
+    compile project(path: ":tongsuo-openjdk", configuration: "runtime"),
             project(':conscrypt-benchmark-base'),
             // Add the preferred native openjdk configuration for this platform.
-            project(':conscrypt-openjdk').sourceSets["$preferredSourceSet"].output,
+            project(':tongsuo-openjdk').sourceSets["$preferredSourceSet"].output,
             libraries.junit,
             libraries.netty_handler,
             libraries.netty_tcnative

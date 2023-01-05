@@ -28,7 +28,7 @@ if (buildUberJar) {
 
     // Add the dependencies for the uber jar.
     uberJarClassifiers.each { uberJarClassifier ->
-        dependencies.uberJar "${group}:conscrypt-openjdk:${version}:${uberJarClassifier}"
+        dependencies.uberJar "${group}:tongsuo-openjdk:${version}:${uberJarClassifier}"
     }
 
     /**
@@ -66,9 +66,9 @@ if (buildUberJar) {
     }
 
     def copySources = tasks.register("copySources", Copy) {
-        dependsOn ":conscrypt-openjdk:sourcesJar"
+        dependsOn ":tongsuo-openjdk:sourcesJar"
         from {
-            project(":conscrypt-openjdk").sourceSets.main.java
+            project(":tongsuo-openjdk").sourceSets.main.java
         }
         into file(sourcesDir)
     }

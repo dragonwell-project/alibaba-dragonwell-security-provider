@@ -49,9 +49,9 @@ subprojects {
     apply plugin: "jacoco"
     apply plugin: "net.ltgt.errorprone"
 
-    group = "org.conscrypt"
-    description = 'Conscrypt is an alternate Java Security Provider that uses BoringSSL'
-    version = "2.6-SNAPSHOT"
+    group = "net.tongsuo"
+    description = 'Tongsuo Provider is an alternate Java Security Provider that uses Tongsuo'
+    version = "1.0.0-SNAPSHOT"
 
     ext {
         os = org.gradle.internal.os.OperatingSystem.current();
