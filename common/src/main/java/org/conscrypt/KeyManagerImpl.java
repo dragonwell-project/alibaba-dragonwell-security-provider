@@ -165,6 +165,7 @@ class KeyManagerImpl extends X509ExtendedKeyManager {
             final String certSigAlg = (cert instanceof X509Certificate
                                        ? ((X509Certificate) cert).getSigAlgName().toUpperCase(Locale.US)
                                        : null);
+
             for (String keyAlgorithm : keyTypes) {
                 if (keyAlgorithm == null) {
                     continue;

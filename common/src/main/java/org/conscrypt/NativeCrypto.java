@@ -741,6 +741,7 @@ public final class NativeCrypto {
     private static final String SUPPORTED_PROTOCOL_TLSV1_1 = "TLSv1.1";
     private static final String SUPPORTED_PROTOCOL_TLSV1_2 = "TLSv1.2";
     static final String SUPPORTED_PROTOCOL_TLSV1_3 = "TLSv1.3";
+    static final String SUPPORTED_PROTOCOL_TLCP = "TLCP";
 
     static final String[] SUPPORTED_TLS_1_3_CIPHER_SUITES = new String[] {
             "TLS_AES_128_GCM_SHA256",
@@ -748,6 +749,22 @@ public final class NativeCrypto {
             "TLS_CHACHA20_POLY1305_SHA256",
             "TLS_SM4_GCM_SM3",
             "TLS_SM4_CCM_SM3",
+    };
+
+    static final String[] SUPPORTED_TLCP_CIPHER_SUITES = new String[] {
+            "ECC-SM2-WITH-SM4-SM3",
+            "ECC-SM2-SM4-CBC-SM3",
+            "ECC-SM2-SM4-GCM-SM3",
+            "ECDHE-SM2-WITH-SM4-SM3",
+            "ECDHE-SM2-SM4-CBC-SM3",
+            "ECDHE-SM2-SM4-GCM-SM3",
+    };
+
+    static final String[] SUPPORTED_TLCP_CIPHER_SUITES_OPENSSL = new String[] {
+            "ECC_SM4_CBC_SM3",
+            "ECC_SM4_GCM_SM3",
+            "ECDHE_SM4_CBC_SM3",
+            "ECDHE_SM4_GCM_SM3",
     };
 
     // SUPPORTED_TLS_1_2_CIPHER_SUITES_SET contains all the supported cipher suites for TLS 1.2,
@@ -760,6 +777,9 @@ public final class NativeCrypto {
 
     static final Set<String> SUPPORTED_TLS_1_3_CIPHER_SUITES_SET = new HashSet<String>(
             Arrays.asList(SUPPORTED_TLS_1_3_CIPHER_SUITES));
+
+    static final Set<String> SUPPORTED_TLCP_CIPHER_SUITES_SET = new HashSet<String>(
+            Arrays.asList(SUPPORTED_TLCP_CIPHER_SUITES));
 
     /**
      * TLS_EMPTY_RENEGOTIATION_INFO_SCSV is RFC 5746's renegotiation
@@ -786,6 +806,18 @@ public final class NativeCrypto {
         // For historical reasons, Java uses a different name for TLS_RSA_WITH_3DES_EDE_CBC_SHA.
         if ("TLS_RSA_WITH_3DES_EDE_CBC_SHA".equals(cipherSuite)) {
             return "SSL_RSA_WITH_3DES_EDE_CBC_SHA";
+        }
+        if ("ECC_SM4_CBC_SM3".equals(cipherSuite)) {
+            return "ECC-SM2-SM4-CBC-SM3";
+        }
+        if ("ECC_SM4_GCM_SM3".equals(cipherSuite)) {
+            return "ECC-SM2-SM4-GCM-SM3";
+        }
+        if ("ECDHE_SM4_CBC_SM3".equals(cipherSuite)) {
+            return "ECDHE-SM2-SM4-CBC-SM3";
+        }
+        if ("ECDHE_SM4_GCM_SM3".equals(cipherSuite)) {
+            return "ECDHE-SM2-SM4-GCM-SM3";
         }
         return cipherSuite;
     }
@@ -860,6 +892,11 @@ public final class NativeCrypto {
     static native int EVP_has_aes_hardware();
 
     static native long SSL_CTX_new();
+    /**
+     * isClientMode = true indicates that SSL Context is client side,
+     * otherwise it indicates that SSL Context is server mode.
+     */
+    static native long SSL_CTX_TLCP_new(boolean isClientMode);
 
     // IMPLEMENTATION NOTE: The default list of cipher suites is a trade-off between what we'd like
     // to use and what servers currently support. We strive to be secure enough by default. We thus
@@ -952,6 +989,11 @@ public final class NativeCrypto {
     static native void setLocalCertsAndPrivateKey(long ssl, NativeSsl ssl_holder, byte[][] encodedCertificates,
         NativeRef.EVP_PKEY pkey) throws SSLException;
 
+    static native void setTlcpLocalCertsAndPrivateKey(long ssl, NativeSsl ssl_holder,
+                                                      byte[][] signCertificates, NativeRef.EVP_PKEY signPkey,
+                                                      byte[][] encCertificates, NativeRef.EVP_PKEY encPkey)
+            throws SSLException;
+
     static native void SSL_set_client_CA_list(long ssl, NativeSsl ssl_holder, byte[][] asn1DerEncodedX500Principals)
             throws SSLException;
 
@@ -998,6 +1040,11 @@ public final class NativeCrypto {
             SUPPORTED_PROTOCOL_TLSV1,
             SUPPORTED_PROTOCOL_TLSV1_1,
             SUPPORTED_PROTOCOL_TLSV1_2,
+    };
+
+    /** Protocols to enable by default when "TLCP" is requested. */
+    static final String[] TLCP_PROTOCOLS = new String[] {
+        SUPPORTED_PROTOCOL_TLCP,
     };
 
     /** Protocols to enable by default when "TLSv1.1" is requested. */
@@ -1086,7 +1133,8 @@ public final class NativeCrypto {
                     && !protocol.equals(SUPPORTED_PROTOCOL_TLSV1_1)
                     && !protocol.equals(SUPPORTED_PROTOCOL_TLSV1_2)
                     && !protocol.equals(SUPPORTED_PROTOCOL_TLSV1_3)
-                    && !protocol.equals(OBSOLETE_PROTOCOL_SSLV3)) {
+                    && !protocol.equals(OBSOLETE_PROTOCOL_SSLV3)
+                    && !protocol.equals(SUPPORTED_PROTOCOL_TLCP)) {
                 throw new IllegalArgumentException("protocol " + protocol + " is not supported");
             }
         }
@@ -1105,25 +1153,38 @@ public final class NativeCrypto {
     static void setEnabledCipherSuites(long ssl, NativeSsl ssl_holder, String[] cipherSuites,
             String[] protocols) {
         checkEnabledCipherSuites(cipherSuites);
-        String maxProtocol = getProtocolRange(protocols).max;
-        List<String> opensslSuites = new ArrayList<String>();
-        for (int i = 0; i < cipherSuites.length; i++) {
-            String cipherSuite = cipherSuites[i];
-            if (cipherSuite.equals(TLS_EMPTY_RENEGOTIATION_INFO_SCSV)) {
-                continue;
+        if (Arrays.asList(protocols).contains(SUPPORTED_PROTOCOL_TLCP)) {
+            // Filter the cipher suites which tlcp not supported.
+            List<String> opensslSuites = new ArrayList<String>();
+            List<String> supportedTlcpCipherSuites = Arrays.asList(SUPPORTED_TLCP_CIPHER_SUITES);
+            for (int i = 0; i < cipherSuites.length; i++) {
+                if (!supportedTlcpCipherSuites.contains(cipherSuites[i])) {
+                    continue;
+                }
+                opensslSuites.add(cipherSuites[i]);
             }
-            // Only send TLS_FALLBACK_SCSV if max version >= 1.2 to prevent inadvertent connection
-            // problems when servers upgrade.  See https://github.com/google/conscrypt/issues/574
-            // for more discussion.
-            if (cipherSuite.equals(TLS_FALLBACK_SCSV)
-                    && (maxProtocol.equals(SUPPORTED_PROTOCOL_TLSV1)
+            SSL_set_cipher_lists(ssl, ssl_holder, opensslSuites.toArray(new String[opensslSuites.size()]));
+        } else {
+            String maxProtocol = getProtocolRange(protocols).max;
+            List<String> opensslSuites = new ArrayList<String>();
+            for (int i = 0; i < cipherSuites.length; i++) {
+                String cipherSuite = cipherSuites[i];
+                if (cipherSuite.equals(TLS_EMPTY_RENEGOTIATION_INFO_SCSV)) {
+                    continue;
+                }
+                // Only send TLS_FALLBACK_SCSV if max version >= 1.2 to prevent inadvertent connection
+                // problems when servers upgrade.  See https://github.com/google/conscrypt/issues/574
+                // for more discussion.
+                if (cipherSuite.equals(TLS_FALLBACK_SCSV)
+                        && (maxProtocol.equals(SUPPORTED_PROTOCOL_TLSV1)
                         || maxProtocol.equals(SUPPORTED_PROTOCOL_TLSV1_1))) {
-                SSL_set_mode(ssl, ssl_holder, NativeConstants.SSL_MODE_SEND_FALLBACK_SCSV);
-                continue;
+                    SSL_set_mode(ssl, ssl_holder, NativeConstants.SSL_MODE_SEND_FALLBACK_SCSV);
+                    continue;
+                }
+                opensslSuites.add(cipherSuiteFromJava(cipherSuite));
             }
-            opensslSuites.add(cipherSuiteFromJava(cipherSuite));
+            SSL_set_cipher_lists(ssl, ssl_holder, opensslSuites.toArray(new String[opensslSuites.size()]));
         }
-        SSL_set_cipher_lists(ssl, ssl_holder, opensslSuites.toArray(new String[opensslSuites.size()]));
     }
 
     static String[] checkEnabledCipherSuites(String[] cipherSuites) {
@@ -1143,6 +1204,9 @@ public final class NativeCrypto {
                 continue;
             }
             if (SUPPORTED_TLS_1_3_CIPHER_SUITES_SET.contains(cipherSuites[i])) {
+                continue;
+            }
+            if (SUPPORTED_TLCP_CIPHER_SUITES_SET.contains(cipherSuites[i])) {
                 continue;
             }
             // For backwards compatibility, it's allowed for |cipherSuite| to

@@ -6295,24 +6295,17 @@ static int cert_status_cb(SSL *ssl, void *arg) {
     }
 }
 
-/*
- * public static native int SSL_CTX_new();
- */
-static jlong NativeCrypto_SSL_CTX_new(JNIEnv* env, jclass) {
-    CHECK_ERROR_QUEUE_ON_RETURN;
-    UniquePtr<SSL_CTX> sslCtx(SSL_CTX_new(TLS_method()));
-    if (sslCtx.get() == nullptr) {
-        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "SSL_CTX_new");
-        return 0;
+void configure_ssl_ctx(SSL_CTX* ssl_ctx, bool isTlcpEnabled) {
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_ALL | SSL_OP_NO_TICKET | SSL_OP_NO_COMPRESSION);
+    // Disable TLSv1.3 server send session tickets
+    SSL_CTX_set_num_tickets(ssl_ctx, 0);
+    // Only set max and min proto version if tlcp is disabled.
+    if (!isTlcpEnabled) {
+        SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_VERSION);
+        SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION);
     }
 
-    SSL_CTX_set_options(sslCtx.get(), SSL_OP_ALL | SSL_OP_NO_TICKET | SSL_OP_NO_COMPRESSION);
-    // Disable TLSv1.3 server send session tickets
-    SSL_CTX_set_num_tickets(sslCtx.get(), 0);
-    SSL_CTX_set_min_proto_version(sslCtx.get(), TLS1_VERSION);
-    SSL_CTX_set_max_proto_version(sslCtx.get(), TLS1_2_VERSION);
-
-    uint32_t mode = SSL_CTX_get_mode(sslCtx.get());
+    uint32_t mode = SSL_CTX_get_mode(ssl_ctx);
     /*
      * Turn on "partial write" mode. This means that SSL_write() will
      * behave like Posix write() and possibly return after only
@@ -6333,28 +6326,62 @@ static jlong NativeCrypto_SSL_CTX_new(JNIEnv* env, jclass) {
     // See https://github.com/netty/netty-tcnative/issues/100
     mode |= SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER;
 
-    SSL_CTX_set_mode(sslCtx.get(), mode);
+    SSL_CTX_set_mode(ssl_ctx, mode);
 
-    SSL_CTX_set_info_callback(sslCtx.get(), info_callback);
-    SSL_CTX_set_cert_cb(sslCtx.get(), cert_cb, nullptr);
+    SSL_CTX_set_info_callback(ssl_ctx, info_callback);
+    SSL_CTX_set_cert_cb(ssl_ctx, cert_cb, nullptr);
     if (conscrypt::trace::kWithJniTraceKeys) {
-        SSL_CTX_set_keylog_callback(sslCtx.get(), debug_print_session_key);
+        SSL_CTX_set_keylog_callback(ssl_ctx, debug_print_session_key);
     }
 
     // By default Tongsuo will cache in server mode, but we want to get
     // notified of new sessions being created in client mode. We set
     // SSL_SESS_CACHE_BOTH in order to get the callback in client mode, but
     // ignore it in server mode in favor of the internal cache.
-    SSL_CTX_set_session_cache_mode(sslCtx.get(), SSL_SESS_CACHE_BOTH);
-    SSL_CTX_sess_set_new_cb(sslCtx.get(), new_session_callback);
-    SSL_CTX_sess_set_get_cb(sslCtx.get(), server_session_requested_callback);
+    SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_BOTH);
+    SSL_CTX_sess_set_new_cb(ssl_ctx, new_session_callback);
+    SSL_CTX_sess_set_get_cb(ssl_ctx, server_session_requested_callback);
 
-    SSL_CTX_set_cert_verify_callback(sslCtx.get(), cert_verify_callback, nullptr);
+    SSL_CTX_set_cert_verify_callback(ssl_ctx, cert_verify_callback, nullptr);
 
-    SSL_CTX_set_tlsext_status_cb(sslCtx.get(), cert_status_cb);
-    SSL_CTX_set_tlsext_status_arg(sslCtx.get(), nullptr);
+    SSL_CTX_set_tlsext_status_cb(ssl_ctx, cert_status_cb);
+    SSL_CTX_set_tlsext_status_arg(ssl_ctx, nullptr);
+}
 
+/*
+ * public static native int SSL_CTX_new();
+ */
+static jlong NativeCrypto_SSL_CTX_new(JNIEnv* env, jclass) {
+    CHECK_ERROR_QUEUE_ON_RETURN;
+    UniquePtr<SSL_CTX> sslCtx(SSL_CTX_new(TLS_method()));
+    if (sslCtx.get() == nullptr) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "SSL_CTX_new");
+        return 0;
+    }
+    configure_ssl_ctx(sslCtx.get(), false);
     JNI_TRACE("NativeCrypto_SSL_CTX_new => %p", sslCtx.get());
+    return (jlong)sslCtx.release();
+}
+
+/*
+ * public static native int SSL_CTX_TLCP_new();
+ */
+static jlong NativeCrypto_SSL_CTX_TLCP_new(JNIEnv* env, jclass obj, jboolean isClientMode) {
+    CHECK_ERROR_QUEUE_ON_RETURN;
+    SSL_CTX* ssl_ctx = nullptr;
+    if (isClientMode) {
+        ssl_ctx = SSL_CTX_new(NTLS_client_method());
+    } else {
+        ssl_ctx = SSL_CTX_new(TLS_method());
+    }
+    UniquePtr<SSL_CTX> sslCtx(ssl_ctx);
+    if (sslCtx.get() == nullptr) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "SSL_CTX_TLCP_new");
+        return 0;
+    }
+    SSL_CTX_enable_ntls(ssl_ctx);
+    configure_ssl_ctx(sslCtx.get(), true);
+    JNI_TRACE("NativeCrypto_SSL_CTX_TLCP_new => %p", sslCtx.get());
     return (jlong)sslCtx.release();
 }
 
@@ -6491,6 +6518,174 @@ static void NativeCrypto_SSL_set1_tls_channel_id(JNIEnv* env, jclass, jlong ssl_
 
     conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
 }
+
+static void NativeCrypto_setTlcpLocalCertsAndPrivateKey(JNIEnv* env, jclass, jlong ssl_address,
+                                                                CONSCRYPT_UNUSED jobject ssl_holder,
+                                                                jobjectArray signCertificatesJava, jobject signPkeyRef,
+                                                                jobjectArray encCertificatesJava, jobject encPkeyRef) {
+    UniquePtr<X509> signCert, encCert;
+    CHECK_ERROR_QUEUE_ON_RETURN;
+    SSL* ssl = to_SSL(env, ssl_address, true);
+    JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey sign_certificates=%p, sign_privateKey=%p, enc_certificates=%p, enc_privateKey=%p", ssl,
+              signCertificatesJava, signPkeyRef, encCertificatesJava, encPkeyRef);
+    if (ssl == nullptr) {
+        return;
+    }
+    if (signCertificatesJava == nullptr || encCertificatesJava == nullptr) {
+        conscrypt::jniutil::throwNullPointerException(env, "signCertificatesJava || encCertificatesJava == null");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => signCertificatesJava || encCertificatesJava == null", ssl);
+        return;
+    }
+
+    if (signPkeyRef == nullptr) {
+        conscrypt::jniutil::throwNullPointerException(env, "signPkeyRef == null");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => privateKey == null", ssl);
+        return;
+    }
+
+    if (encPkeyRef == nullptr) {
+        conscrypt::jniutil::throwNullPointerException(env, "encPkeyRef == null");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => privateKey == null", ssl);
+        return;
+    }
+
+    UniquePtr<STACK_OF(X509)> chain(sk_X509_new_null());
+    if (chain.get() == NULL) {
+        conscrypt::jniutil::throwOutOfMemory(env, "Unable to allocate chain stack");
+        return;
+    }
+
+    size_t numSignCerts = static_cast<size_t>(env->GetArrayLength(signCertificatesJava));
+    if (numSignCerts == 0) {
+        conscrypt::jniutil::throwException(env, "java/lang/IllegalArgumentException",
+                                           "signCertificates.length == 0");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => signCertificates.length == 0", ssl);
+        return;
+    }
+
+    // Get the sign private key.
+    EVP_PKEY* signPkey = fromContextObject<EVP_PKEY>(env, signPkeyRef);
+    if (signPkey == nullptr) {
+        conscrypt::jniutil::throwNullPointerException(env, "sign pkey == null");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => sign pkey == null", ssl);
+        return;
+    }
+
+    // Copy the sign certificates.
+    for (size_t i = 0; i < numSignCerts; ++i) {
+        ScopedByteArrayRO bytes(env, reinterpret_cast<jbyteArray>(
+            env->GetObjectArrayElement(signCertificatesJava, i)));
+        if (bytes.get() == nullptr) {
+            JNI_TRACE("NativeCrypto_setTlcpLocalCertsAndPrivateKey(%p) => using byte array failed", ssl);
+            return;
+        }
+
+        const unsigned char* tmp = reinterpret_cast<const unsigned char*>(bytes.get());
+        // NOLINTNEXTLINE(runtime/int)
+        UniquePtr<X509> x509(d2i_X509(nullptr, &tmp, static_cast<long>(bytes.size())));
+        if (x509.get() == nullptr) {
+            conscrypt::jniutil::throwExceptionFromBoringSSLError(
+                    env, "Error reading X.509 data", conscrypt::jniutil::throwParsingException);
+            return;
+        }
+
+        if (i == 0) {
+            signCert.reset(x509.release());
+        } else {
+            if (sk_X509_push(chain.get(), x509.get()) <= 0)
+                return;
+
+            OWNERSHIP_TRANSFERRED(x509);
+        }
+    }
+
+    if (SSL_use_sign_PrivateKey(ssl, signPkey) != 1) {
+        conscrypt::jniutil::throwSSLExceptionWithSslErrors(env, ssl, SSL_ERROR_NONE,
+                                                           "Error configuring certificate");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey Sign => error", ssl);
+        return;
+    }
+
+    if (SSL_use_sign_certificate(ssl, signCert.get()) != 1) {
+        conscrypt::jniutil::throwSSLExceptionWithSslErrors(env, ssl, SSL_ERROR_NONE,
+                                                           "Error configuring certificate");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey Sign => error", ssl);
+        return;
+    }
+
+    JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey=> ok", ssl);
+
+    /*************************************************************************************/
+    // enc private key and certificate setting.
+    size_t numEncCerts = static_cast<size_t>(env->GetArrayLength(encCertificatesJava));
+    if (numEncCerts == 0) {
+        conscrypt::jniutil::throwException(env, "java/lang/IllegalArgumentException",
+                                           "encCertificates.length == 0");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => encCertificates.length == 0", ssl);
+        return;
+    }
+
+    // Get the enc private key.
+    EVP_PKEY* encPkey = fromContextObject<EVP_PKEY>(env, encPkeyRef);
+    if (encPkey == nullptr) {
+        conscrypt::jniutil::throwNullPointerException(env, "enc pkey == null");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => enc pkey == null", ssl);
+        return;
+    }
+
+    // Copy the sign certificates.
+    for (size_t i = 0; i < numEncCerts; ++i) {
+        ScopedByteArrayRO bytes(env, reinterpret_cast<jbyteArray>(
+            env->GetObjectArrayElement(encCertificatesJava, i)));
+        if (bytes.get() == nullptr) {
+            JNI_TRACE("NativeCrypto_setTlcpLocalCertsAndPrivateKey(%p) => using byte array failed", ssl);
+            return;
+        }
+
+        const unsigned char* tmp = reinterpret_cast<const unsigned char*>(bytes.get());
+        // NOLINTNEXTLINE(runtime/int)
+        UniquePtr<X509> x509(d2i_X509(nullptr, &tmp, static_cast<long>(bytes.size())));
+        if (x509.get() == nullptr) {
+            conscrypt::jniutil::throwExceptionFromBoringSSLError(
+                    env, "Error reading X.509 data", conscrypt::jniutil::throwParsingException);
+            return;
+        }
+
+        if (i == 0) {
+            encCert.reset(x509.release());
+        } else {
+            if (sk_X509_push(chain.get(), x509.get()) <= 0)
+                return;
+
+            OWNERSHIP_TRANSFERRED(x509);
+        }
+    }
+
+    if (SSL_use_enc_PrivateKey(ssl, encPkey) != 1) {
+        conscrypt::jniutil::throwSSLExceptionWithSslErrors(env, ssl, SSL_ERROR_NONE,
+                                                           "Error configuring certificate");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => error", ssl);
+        return;
+    }
+
+    if (SSL_use_enc_certificate(ssl, encCert.get()) != 1) {
+        conscrypt::jniutil::throwSSLExceptionWithSslErrors(env, ssl, SSL_ERROR_NONE,
+                                                           "Error configuring certificate");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => error", ssl);
+        return;
+    }
+
+    /*************************************************************************************/
+    // set certificate chain for sign and enc certification.
+    if (SSL_set1_chain(ssl, chain.get()) != 1) {
+        conscrypt::jniutil::throwSSLExceptionWithSslErrors(env, ssl, SSL_ERROR_NONE,
+                                                           "Error configuring certificate");
+        JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => error", ssl);
+        return;
+    }
+    JNI_TRACE("ssl=%p NativeCrypto_setTlcpLocalCertsAndPrivateKey => ok", ssl);
+}
+
 static void NativeCrypto_setLocalCertsAndPrivateKey(JNIEnv* env, jclass, jlong ssl_address,
                                                     CONSCRYPT_UNUSED jobject ssl_holder,
                                                     jobjectArray encodedCertificatesJava,
@@ -8650,6 +8845,9 @@ const char *ssl_protocol_to_string(int version)
     case DTLS1_2_VERSION:
         return "DTLSv1.2";
 
+    case NTLS1_1_VERSION:
+        return "TLCP";
+
     default:
         return "unknown";
     }
@@ -9919,6 +10117,7 @@ static JNINativeMethod sNativeCryptoMethods[] = {
         // CONSCRYPT_NATIVE_METHOD(asn1_write_free, "(J)V"),
         CONSCRYPT_NATIVE_METHOD(EVP_has_aes_hardware, "()I"),
         CONSCRYPT_NATIVE_METHOD(SSL_CTX_new, "()J"),
+        CONSCRYPT_NATIVE_METHOD(SSL_CTX_TLCP_new, "(Z)J"),
         CONSCRYPT_NATIVE_METHOD(SSL_CTX_free, "(J" REF_SSL_CTX ")V"),
         CONSCRYPT_NATIVE_METHOD(SSL_CTX_set_session_id_context, "(J" REF_SSL_CTX "[B)V"),
         CONSCRYPT_NATIVE_METHOD(SSL_CTX_set_timeout, "(J" REF_SSL_CTX "J)J"),
@@ -9929,6 +10128,7 @@ static JNINativeMethod sNativeCryptoMethods[] = {
         CONSCRYPT_NATIVE_METHOD(SSL_set1_tls_channel_id, "(J" REF_SSL REF_EVP_PKEY ")V"),
         // END { not supported by Tongsuo }
         CONSCRYPT_NATIVE_METHOD(setLocalCertsAndPrivateKey, "(J" REF_SSL "[[B" REF_EVP_PKEY ")V"),
+        CONSCRYPT_NATIVE_METHOD(setTlcpLocalCertsAndPrivateKey, "(J" REF_SSL "[[B" REF_EVP_PKEY "[[B" REF_EVP_PKEY ")V"),
         CONSCRYPT_NATIVE_METHOD(SSL_set_client_CA_list, "(J" REF_SSL "[[B)V"),
         CONSCRYPT_NATIVE_METHOD(SSL_set_mode, "(J" REF_SSL "J)J"),
         CONSCRYPT_NATIVE_METHOD(SSL_set_options, "(J" REF_SSL "J)J"),

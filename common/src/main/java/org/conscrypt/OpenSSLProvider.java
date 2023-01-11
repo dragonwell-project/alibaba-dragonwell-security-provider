@@ -90,6 +90,7 @@ public class OpenSSLProvider extends Provider {
         String classOpenSSLContextImpl = PREFIX + "OpenSSLContextImpl";
         String tls12SSLContextSuffix = "$TLSv12";
         String tls13SSLContextSuffix = "$TLSv13";
+        String tlcpSSLContextSuffix = "$TLCP";
         String defaultSSLContextSuffix;
         switch (defaultTlsProtocol) {
             case "TLSv1.2":
@@ -109,6 +110,7 @@ public class OpenSSLProvider extends Provider {
         put("SSLContext.TLSv1.1", classOpenSSLContextImpl + "$TLSv11");
         put("SSLContext.TLSv1.2", classOpenSSLContextImpl + tls12SSLContextSuffix);
         put("SSLContext.TLSv1.3", classOpenSSLContextImpl + tls13SSLContextSuffix);
+        put("SSLContext.TLCP", classOpenSSLContextImpl + tlcpSSLContextSuffix);
         put("SSLContext.Default", PREFIX + "DefaultSSLContextImpl" + defaultSSLContextSuffix);
 
         if (includeTrustManager) {

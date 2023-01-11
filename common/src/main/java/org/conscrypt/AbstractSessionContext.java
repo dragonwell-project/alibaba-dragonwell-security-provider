@@ -39,7 +39,8 @@ abstract class AbstractSessionContext implements SSLSessionContext {
     private volatile int maximumSize;
     private volatile int timeout = DEFAULT_SESSION_TIMEOUT_SECONDS;
 
-    final long sslCtxNativePointer = NativeCrypto.SSL_CTX_new();
+    volatile long sslCtxNativePointer;
+    private volatile boolean enableTlcp = false;
 
     private final Map<ByteArray, NativeSslSession> sessions =
             new LinkedHashMap<ByteArray, NativeSslSession>() {
@@ -62,8 +63,14 @@ abstract class AbstractSessionContext implements SSLSessionContext {
      *
      * @param maximumSize of cache
      */
-    AbstractSessionContext(int maximumSize) {
+    AbstractSessionContext(int maximumSize, boolean enableTlcp, boolean isClientMode) {
         this.maximumSize = maximumSize;
+        this.enableTlcp = enableTlcp;
+        if (enableTlcp) {
+            this.sslCtxNativePointer = NativeCrypto.SSL_CTX_TLCP_new(isClientMode);
+        } else {
+            this.sslCtxNativePointer = NativeCrypto.SSL_CTX_new();
+        }
     }
 
     /**

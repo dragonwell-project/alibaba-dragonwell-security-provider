@@ -46,6 +46,8 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
+
+import net.tongsuo.TlcpKeyManagerImpl;
 import org.conscrypt.NativeCrypto.SSLHandshakeCallbacks;
 import org.conscrypt.SSLParametersImpl.AliasChooser;
 import org.conscrypt.SSLParametersImpl.PSKCallbacks;
@@ -227,6 +229,82 @@ final class NativeSsl {
                 ? aliasChooser.chooseClientAlias(keyManager, issuers, keyTypes)
                 : null;
         setCertificate(alias);
+        // Set sign certificate and private key.
+        // Set enc certificate and private key.
+        if (parameters.enableTlcp && keyManager instanceof TlcpKeyManagerImpl) {
+            String tlcpSignAlias = ((TlcpKeyManagerImpl) keyManager).getTlcpSignAlias();
+            String tlcpEncAlias = ((TlcpKeyManagerImpl) keyManager).getTlcpEncAlias();
+            if (tlcpSignAlias != null && tlcpEncAlias != null) {
+                try {
+                    setTlcpCertificate(tlcpSignAlias, tlcpEncAlias);
+                } catch (CertificateEncodingException e) {
+                    throw new SSLException(e);
+                }
+            }
+        }
+    }
+
+    final static class KeyCertificateWrapper {
+        private OpenSSLKey key;
+        private byte[][] encodedLocalCerts;
+
+        KeyCertificateWrapper(OpenSSLKey key, byte[][] encodedLocalCerts) {
+            this.key = key;
+            this.encodedLocalCerts = encodedLocalCerts;
+        }
+
+        OpenSSLKey getKey() {
+            return this.key;
+        }
+
+        byte[][] getEncodedLocalCerts() {
+            return this.encodedLocalCerts;
+        }
+    }
+
+    private KeyCertificateWrapper parseKeyAndCertificate(String alias) throws CertificateEncodingException, SSLException {
+        // Convert the key so we can access a native reference.
+        if (alias == null) {
+            return null;
+        }
+        X509KeyManager keyManager = parameters.getX509KeyManager();
+        if (keyManager == null) {
+            return null;
+        }
+        PrivateKey privateKey = keyManager.getPrivateKey(alias);
+        if (privateKey == null) {
+            return null;
+        }
+        X509Certificate[] certificates = keyManager.getCertificateChain(alias);
+        if (certificates == null) {
+            return null;
+        }
+        int numLocalCerts = certificates.length;
+        PublicKey publicKey = (numLocalCerts > 0) ? certificates[0].getPublicKey() : null;
+
+        // Encode the local certificates.
+        byte[][] encodedLocalCerts = new byte[numLocalCerts][];
+        for (int i = 0; i < numLocalCerts; ++i) {
+            encodedLocalCerts[i] = certificates[i].getEncoded();
+        }
+
+        // Convert the key so we can access a native reference.
+        final OpenSSLKey key;
+        try {
+            key = OpenSSLKey.fromPrivateKeyForTLSStackOnly(privateKey, publicKey);
+        } catch (InvalidKeyException e) {
+            throw new SSLException(e);
+        }
+
+        return new KeyCertificateWrapper(key, encodedLocalCerts);
+    }
+
+    private void setTlcpCertificate(String signAlias, String encAlias) throws CertificateEncodingException, SSLException {
+        KeyCertificateWrapper sign = parseKeyAndCertificate(signAlias);
+        KeyCertificateWrapper enc = parseKeyAndCertificate(encAlias);
+        NativeCrypto.setTlcpLocalCertsAndPrivateKey(ssl, this,
+                sign.getEncodedLocalCerts(), sign.getKey().getNativeRef(),
+                enc.getEncodedLocalCerts(), enc.getKey().getNativeRef());
     }
 
     private void setCertificate(String alias) throws CertificateEncodingException, SSLException {
@@ -311,7 +389,10 @@ final class NativeSsl {
                     + NativeCrypto.OBSOLETE_PROTOCOL_SSLV3
                     + " is no longer supported and was filtered from the list");
         }
-        NativeCrypto.setEnabledProtocols(ssl, this, parameters.enabledProtocols);
+
+        if (!parameters.enableTlcp) {
+            NativeCrypto.setEnabledProtocols(ssl, this, parameters.enabledProtocols);
+        }
         NativeCrypto.setEnabledCipherSuites(
             ssl, this, parameters.enabledCipherSuites, parameters.enabledProtocols);
 
@@ -355,14 +436,25 @@ final class NativeSsl {
 
     void configureServerCertificate() throws IOException {
         verifyWithSniMatchers(getRequestedServerName());
-        if (isClient()) {
+        X509KeyManager keyManager = parameters.getX509KeyManager();
+        if (isClient() || keyManager == null) {
             return;
         }
-        X509KeyManager keyManager = parameters.getX509KeyManager();
-        if (keyManager != null) {
-            for (String keyType : getCipherKeyTypes()) {
+        for (String keyType : getCipherKeyTypes()) {
+            try {
+                setCertificate(aliasChooser.chooseServerAlias(keyManager, keyType));
+            } catch (CertificateEncodingException e) {
+                throw new IOException(e);
+            }
+        }
+        // Set sign certificate and private key.
+        // Set enc certificate and private key.
+        if (parameters.enableTlcp && keyManager instanceof TlcpKeyManagerImpl) {
+            String tlcpSignAlias = ((TlcpKeyManagerImpl) keyManager).getTlcpSignAlias();
+            String tlcpEncAlias = ((TlcpKeyManagerImpl) keyManager).getTlcpEncAlias();
+            if (tlcpSignAlias != null && tlcpEncAlias != null) {
                 try {
-                    setCertificate(aliasChooser.chooseServerAlias(keyManager, keyType));
+                    setTlcpCertificate(tlcpSignAlias, tlcpEncAlias);
                 } catch (CertificateEncodingException e) {
                     throw new IOException(e);
                 }

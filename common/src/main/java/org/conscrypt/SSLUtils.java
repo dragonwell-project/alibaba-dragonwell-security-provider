@@ -218,7 +218,10 @@ final class SSLUtils {
      */
     static String getServerX509KeyType(long sslCipherNative) {
         String name = NativeCrypto.SSL_CIPHER_get_name(sslCipherNative);
-        if (name.equals("TLS_SM4_GCM_SM3") || name.equals("TLS_SM4_CCM_SM3")) {
+        if (name.equals("TLS_SM4_GCM_SM3") || name.equals("TLS_SM4_CCM_SM3")
+            || name.equals("ECC-SM2-WITH-SM4-SM3") || name.equals("ECDHE-SM2-WITH-SM4-SM3")
+            || name.equals("ECC-SM2-SM4-CBC-SM3") || name.equals("ECC-SM2-SM4-GCM-SM3")
+            || name.equals("ECDHE-SM2-SM4-CBC-SM3") || name.equals("ECDHE-SM2-SM4-GCM-SM3")) {
             return KEY_TYPE_SM2;
         }
 

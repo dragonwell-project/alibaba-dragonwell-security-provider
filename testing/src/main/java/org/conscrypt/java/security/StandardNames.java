@@ -156,11 +156,12 @@ public final class StandardNames {
         provideSslContextEnabledProtocols("TLSv1.2", TLSVersion.TLSv1, TLSVersion.TLSv12);
         provideSslContextEnabledProtocols("TLSv1.3", TLSVersion.TLSv1, TLSVersion.TLSv13);
         provideSslContextEnabledProtocols("Default", TLSVersion.TLSv1, TLSVersion.TLSv13);
+        provideSslContextEnabledProtocols("TLCP", TLSVersion.TLCP, TLSVersion.TLCP);
     }
 
     public static final String SSL_CONTEXT_PROTOCOLS_DEFAULT = "Default";
     public static final Set<String> SSL_CONTEXT_PROTOCOLS = new HashSet<String>(
-            Arrays.asList(SSL_CONTEXT_PROTOCOLS_DEFAULT, "TLS", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"));
+            Arrays.asList(SSL_CONTEXT_PROTOCOLS_DEFAULT, "TLS", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3", "TLCP"));
     public static final Set<String> SSL_CONTEXT_PROTOCOLS_WITH_DEFAULT_CONFIG = new HashSet<String>(
             Arrays.asList(SSL_CONTEXT_PROTOCOLS_DEFAULT, "TLS", "TLSv1.3"));
 
@@ -183,6 +184,7 @@ public final class StandardNames {
         TLSv11("TLSv1.1"),
         TLSv12("TLSv1.2"),
         TLSv13("TLSv1.3"),
+        TLCP("TLCP"),
         ;
 
         private final String name;
