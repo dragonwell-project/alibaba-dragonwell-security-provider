@@ -12,12 +12,12 @@ publishing {
                     description = project.description
                 }
 
-                url = 'https://conscrypt.org/'
+                url = 'https://www.tongsuo.net/'
 
                 scm {
-                    connection = 'scm:git:https://github.com/google/conscrypt.git'
-                    developerConnection = 'scm:git:git@github.com:google/conscrypt.git'
-                    url = 'https://github.com/google/conscrypt'
+                    connection = 'scm:git:https://github.com/Tongsuo-Project/tongsuo-java-sdk.git'
+                    developerConnection = 'scm:git:git@github.com:Tongsuo-Project/tongsuo-java-sdk.git'
+                    url = 'https://github.com/Tongsuo-Project/tongsuo-java-sdk'
                 }
 
                 licenses {
@@ -29,12 +29,12 @@ publishing {
 
                 developers {
                     developer {
-                        id = 'conscrypt'
-                        name = 'Conscrypt Contributors'
-                        email = 'conscrypt@googlegroups.com'
-                        url = 'https://conscrypt.org/'
-                        organization = 'Google, Inc.'
-                        organizationUrl = 'https://www.google.com'
+                        id = 'tongsuo'
+                        name = 'Tongsuo Project Authors'
+                        email = 'zhangchenglong@tongsuo.net'
+                        url = 'https://www.tongsuo.net/'
+                        organization = 'Tongsuo Project'
+                        organizationUrl = 'https://github.com/Tongsuo-Project'
                     }
                 }
             }
@@ -43,11 +43,11 @@ publishing {
 
     repositories {
         maven {
-            def snapshotUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+            def snapshotUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
             def stagingUrl = rootProject.hasProperty('repositoryId') ? \
-                'https://oss.sonatype.org/service/local/staging/deployByRepositoryId/' \
+                'https://s01.oss.sonatype.org/service/local/staging/deployByRepositoryId/' \
                     + rootProject.repositoryId : \
-                'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+                'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
             url isSnapshot ? snapshotUrl : stagingUrl
             credentials {
                 username = rootProject.findProperty('ossrhUsername') ?: ''
@@ -58,7 +58,6 @@ publishing {
 }
 
 signing {
-    required false
     sign publishing.publications.maven
 }
 

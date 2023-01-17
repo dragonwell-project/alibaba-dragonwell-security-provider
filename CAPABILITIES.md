@@ -1,9 +1,9 @@
-Conscrypt's Capabilities
+Tongsuo-Java-SDK's Capabilities
 ========================================
 
-Conscrypt is relatively selective in choosing the set of primitives to provide, focusing
+Tongsuo-Java-SDK is relatively selective in choosing the set of primitives to provide, focusing
 on the most important and widely-used algorithms.  Following is a list of JCA algorithm names
-and other identifiers that are supported by Conscrypt.
+and other identifiers that are supported by Tongsuo-Java-SDK.
 
 ## TLS
 
@@ -15,7 +15,7 @@ and other identifiers that are supported by Conscrypt.
 * `TLSv1.2`
 * `TLSv1.3`
 
-Conscrypt supports TLS v1.0-1.3.  For backwards compatibility it will accept
+Tongsuo-Java-SDK supports TLS v1.0-1.3.  For backwards compatibility it will accept
 `SSLv3` in calls to methods like
 [`setEnabledProtocols()`](https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#setEnabledProtocols-java.lang.String:A-)
 but will ignore it.
@@ -30,7 +30,7 @@ but will ignore it.
 * `TLSv1.2`
 * `TLSv1.3`
 
-Conscrypt provides the above set of SSLContext algorithm names for JSSE
+Tongsuo-Java-SDK provides the above set of SSLContext algorithm names for JSSE
 purposes, including the special value `Default`, which is used to determine the
 value of
 [`SSLContext.getDefault()`](https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLContext.html#getDefault--).
@@ -139,8 +139,8 @@ Triple DES with either two or three intermediate keys.
 * `RSA/ECB/OAEPWithSHA-512AndMGF1Padding`
 * `RSA/ECB/PKCS1Padding`
 
-Conscrypt's OAEP ciphers (eg, `RSA/ECB/OAEPWithSHA-256AndMGF1Padding`) use the named digest for
-both the main digest and the MGF1 digest.  This differs from the behavior of some other
+Tongsuo-Java-SDK's OAEP ciphers (eg, `RSA/ECB/OAEPWithSHA-256AndMGF1Padding`) use the named digest
+for both the main digest and the MGF1 digest.  This differs from the behavior of some other
 providers, including the ones bundled with OpenJDK, which always use SHA-1 for the MGF1 digest.
 For maximum compatibility, you should use `RSA/ECB/OAEPPadding` and initialize it with an
 [`OAEPParameterSpec`](https://docs.oracle.com/javase/9/docs/api/javax/crypto/spec/OAEPParameterSpec.html).
@@ -154,7 +154,7 @@ For maximum compatibility, you should use `RSA/ECB/OAEPPadding` and initialize i
 * `OAEP`
 * `PSS`
 
-Conscrypt's EC AlgorithmParameters implementation only supports named curves.
+Tongsuo-Java-SDK's EC AlgorithmParameters implementation only supports named curves.
 
 ### CertificateFactory
 * `X509`
@@ -226,7 +226,7 @@ Conscrypt's EC AlgorithmParameters implementation only supports named curves.
 
 ### Elliptic Curves
 
-Conscrypt supports the following curves in EC crypto operations (such as ECDSA signatures) and TLS:
+Tongsuo-Java-SDK supports the following curves in EC crypto operations (such as ECDSA signatures) and TLS:
 
 | Curve | EC Crypto |  TLS  |
 | ----- | :-------: | :---: |
@@ -235,3 +235,4 @@ Conscrypt supports the following curves in EC crypto operations (such as ECDSA s
 | secp384r1 | X | X |
 | secp521r1 | X |   |
 | x25519 |   | X |
+| SM2 |  |  |
