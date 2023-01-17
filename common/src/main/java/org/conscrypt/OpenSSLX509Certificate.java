@@ -57,7 +57,7 @@ import org.conscrypt.OpenSSLX509CertificateFactory.ParsingException;
  * An implementation of {@link X509Certificate} based on BoringSSL.
  */
 @Internal
-public final class OpenSSLX509Certificate extends X509Certificate {
+public class OpenSSLX509Certificate extends X509Certificate {
     private static final long serialVersionUID = 1992239142393372128L;
 
     private transient final long mContext;
@@ -66,7 +66,7 @@ public final class OpenSSLX509Certificate extends X509Certificate {
     private final Date notBefore;
     private final Date notAfter;
 
-    OpenSSLX509Certificate(long ctx) throws ParsingException {
+    public OpenSSLX509Certificate(long ctx) throws ParsingException {
         mContext = ctx;
         // The legacy X509 OpenSSL APIs don't validate ASN1_TIME structures until access, so
         // parse them here because this is the only time we're allowed to throw ParsingException

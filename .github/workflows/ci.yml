@@ -102,4 +102,4 @@ jobs:
       - name: Build test JAR with dependencies
         if: runner.os == 'Linux'
         shell: bash
-        run: ./gradlew :conscrypt-openjdk:testJar -PcheckErrorQueue
+        run: ./gradlew :tongsuo-openjdk:testJar -PcheckErrorQueue

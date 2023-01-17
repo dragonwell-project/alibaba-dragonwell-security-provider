@@ -31,7 +31,7 @@ import java.security.Provider;
  * </ul>
  */
 @Internal
-public final class OpenSSLProvider extends Provider {
+public class OpenSSLProvider extends Provider {
     private static final long serialVersionUID = 2996752495318905136L;
 
     private static final String PREFIX = OpenSSLProvider.class.getPackage().getName() + ".";
@@ -50,11 +50,35 @@ public final class OpenSSLProvider extends Provider {
     }
 
     public OpenSSLProvider(String providerName) {
-        this(providerName, Platform.provideTrustManagerByDefault(), "TLSv1.3");
+        this(providerName,
+                Platform.provideTrustManagerByDefault(),
+                "TLSv1.3",
+                1.0,
+                "Android's OpenSSL-backed security provider");
     }
 
-    OpenSSLProvider(String providerName, boolean includeTrustManager, String defaultTlsProtocol) {
-        super(providerName, 1.0, "Android's OpenSSL-backed security provider");
+    public OpenSSLProvider(String providerName, boolean includeTrustManager, String defaultTlsProtocol) {
+        this(providerName,
+                includeTrustManager,
+                defaultTlsProtocol,
+                1.0,
+                "Android's OpenSSL-backed security provider");
+    }
+
+    public OpenSSLProvider(String providerName, double version, String info) {
+        this(providerName,
+                Platform.provideTrustManagerByDefault(),
+                "TLSv1.3",
+                version,
+                info);
+    }
+
+    OpenSSLProvider(String providerName,
+                    boolean includeTrustManager,
+                    String defaultTlsProtocol,
+                    double version,
+                    String info) {
+        super(providerName, version, info);
 
         // Ensure that the native library has been loaded.
         NativeCrypto.checkAvailability();
