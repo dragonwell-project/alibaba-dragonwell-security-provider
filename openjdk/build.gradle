@@ -8,7 +8,7 @@ import org.codehaus.groovy.runtime.InvokerHelper
 
 apply plugin: 'biz.aQute.bnd.builder'
 
-description = 'Conscrypt: OpenJdk'
+description = 'Tongsuo: OpenJdk'
 
 ext {
     jniSourceDir = "$rootDir/common/src/jni"

@@ -8,13 +8,10 @@ We commonly need to know what platform you are on:
 
 # How to contribute
 
-We definitely welcome patches and contributions to Conscrypt! Here are some
+We definitely welcome patches and contributions to Tongsuo-Java-SDK! Here are some
 guideline and information about how to do so.
 
 ## Before getting started
-
-In order to protect both you and ourselves, you will need to sign the
-[Contributor License Agreement](https://cla.developers.google.com/clas).
 
 We follow the [Clang Format](http://clang.llvm.org/docs/ClangFormat.html).
 There is support in most IDEs.
@@ -34,7 +31,7 @@ beforehand.
 Make sure that `./gradlew check` (`gradlew check` on Windows) completes
 successfully without any new warnings (see [Building](BUILDING.md)). Then create a Pull Request
 with your changes. When the changes are accepted, they will be merged or cherry-picked by
-a Conscrypt developer.
+a Tongsuo-Java-SDK developer.
 
 ## Source Overview
 
