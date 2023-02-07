@@ -47,6 +47,9 @@ final class EvpMdRef {
         } else if (SHA224.JCA_NAME.equals(algorithmUpper)
                 || SHA224.OID.equals(algorithmUpper)) {
             return SHA224.JCA_NAME;
+        } else if (SM3.JCA_NAME.equals(algorithmUpper)
+                || SM3.OID.equals(algorithmUpper)) {
+            return SM3.JCA_NAME;
         } else {
             return null;
         }
@@ -65,6 +68,8 @@ final class EvpMdRef {
             return EvpMdRef.SHA384.EVP_MD;
         } else if (SHA224.JCA_NAME.equals(algorithmUpper)) {
             return EvpMdRef.SHA224.EVP_MD;
+        } else if (SM3.JCA_NAME.equals(algorithmUpper)) {
+            return EvpMdRef.SM3.EVP_MD;
         } else {
             throw new NoSuchAlgorithmException("Unsupported algorithm: " + algorithm);
         }
@@ -83,6 +88,8 @@ final class EvpMdRef {
             return EvpMdRef.SHA384.SIZE_BYTES;
         } else if (SHA224.JCA_NAME.equals(algorithmUpper)) {
             return EvpMdRef.SHA224.SIZE_BYTES;
+        } else if (SM3.JCA_NAME.equals(algorithmUpper)) {
+            return EvpMdRef.SM3.SIZE_BYTES;
         } else {
             throw new NoSuchAlgorithmException("Unsupported algorithm: " + algorithm);
         }
@@ -101,6 +108,8 @@ final class EvpMdRef {
             return SHA384.JCA_NAME;
         } else if (evpMdRef == SHA512.EVP_MD) {
             return SHA512.JCA_NAME;
+        } else if (evpMdRef == SM3.EVP_MD) {
+            return SM3.JCA_NAME;
         } else {
             throw new IllegalArgumentException("Unknown EVP_MD reference");
         }
@@ -157,6 +166,15 @@ final class EvpMdRef {
         static final int SIZE_BYTES = NativeCrypto.EVP_MD_size(EVP_MD);
 
         private SHA512() {}
+    }
+
+    static final class SM3{
+        static final String JCA_NAME = "SM3";
+        static final String OID = "1.2.156.10197.1.401";
+        static final long EVP_MD = NativeCrypto.EVP_get_digestbyname("sm3");
+        static final int SIZE_BYTES = NativeCrypto.EVP_MD_size(EVP_MD);
+
+        private SM3() {}
     }
 
     private EvpMdRef() {}

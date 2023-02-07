@@ -162,6 +162,9 @@ public class OpenSSLProvider extends Provider {
         put("MessageDigest.MD5", PREFIX + "OpenSSLMessageDigestJDK$MD5");
         put("Alg.Alias.MessageDigest.1.2.840.113549.2.5", "MD5");
 
+        put("MessageDigest.SM3", PREFIX + "OpenSSLMessageDigestJDK$SM3");
+        put("Alg.Alias.MessageDigest.1.2.156.10197.1.401", "SM3");
+
         /* == KeyGenerators == */
         put("KeyGenerator.ARC4", PREFIX + "KeyGeneratorImpl$ARC4");
         put("Alg.Alias.KeyGenerator.RC4", "ARC4");
@@ -205,6 +208,8 @@ public class OpenSSLProvider extends Provider {
         put("Alg.Alias.KeyGenerator.1.2.840.113549.2.11", "HmacSHA512");
         put("Alg.Alias.KeyGenerator.HMAC-SHA512", "HmacSHA512");
         put("Alg.Alias.KeyGenerator.HMAC/SHA512", "HmacSHA512");
+
+        put("KeyGenerator.HmacSM3", PREFIX + "KeyGeneratorImpl$HmacSM3");
 
         /* == KeyPairGenerators == */
         put("KeyPairGenerator.RSA", PREFIX + "OpenSSLRSAKeyPairGenerator");
@@ -529,6 +534,8 @@ public class OpenSSLProvider extends Provider {
         put("Alg.Alias.Mac.HMAC-SHA512", "HmacSHA512");
         put("Alg.Alias.Mac.HMAC/SHA512", "HmacSHA512");
         put("Alg.Alias.Mac.PBEWITHHMACSHA512", "HmacSHA512");
+
+        putMacImplClass("HmacSM3", "OpenSSLMac$HmacSM3");
 
         putMacImplClass("AESCMAC", "OpenSSLMac$AesCmac");
 
