@@ -134,6 +134,7 @@ public class KeyGeneratorTest {
         putKeySize("HmacSHA384", 1025);
         putKeySize("HmacSHA512", 40);
         putKeySize("HmacSHA512", 1025);
+        putKeySize("HmacSM3", 256);
     }
 
     private void test_KeyGenerator(KeyGenerator kg) throws Exception {
