@@ -191,6 +191,12 @@ public class OpenSSLMessageDigestJDK extends MessageDigestSpi implements Cloneab
         }
     }
 
+    public static final class SM3 extends OpenSSLMessageDigestJDK {
+        public SM3() throws NoSuchAlgorithmException {
+            super(EvpMdRef.SM3.EVP_MD, EvpMdRef.SM3.SIZE_BYTES);
+        }
+    }
+
     @Override
     public Object clone() {
         NativeRef.EVP_MD_CTX ctxCopy = new NativeRef.EVP_MD_CTX(NativeCrypto.EVP_MD_CTX_create());
