@@ -120,6 +120,12 @@ public abstract class KeyGeneratorImpl extends KeyGeneratorSpi {
         }
     }
 
+    public static final class HmacSM3 extends KeyGeneratorImpl {
+        public HmacSM3() {
+            super("HmacSM3", 256);
+        }
+    }
+
     public static final class DESEDE extends KeyGeneratorImpl {
         public DESEDE() {
             super("DESEDE", 192);

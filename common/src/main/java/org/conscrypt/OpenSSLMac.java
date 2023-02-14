@@ -219,6 +219,12 @@ public abstract class OpenSSLMac extends MacSpi {
         }
     }
 
+    public static final class HmacSM3 extends Hmac {
+        public HmacSM3() {
+            super(EvpMdRef.SM3.EVP_MD, EvpMdRef.SM3.SIZE_BYTES);
+        }
+    }
+
     public static final class AesCmac extends OpenSSLMac {
         private NativeRef.CMAC_CTX ctx;
 
