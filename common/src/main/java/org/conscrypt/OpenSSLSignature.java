@@ -39,7 +39,7 @@ import java.security.spec.PSSParameterSpec;
 @Internal
 public class OpenSSLSignature extends SignatureSpi {
     private enum EngineType {
-        RSA, EC,
+        RSA, EC, SM2
     }
 
     private NativeRef.EVP_MD_CTX ctx;
@@ -184,6 +184,12 @@ public class OpenSSLSignature extends SignatureSpi {
                 if (pkeyType != NativeConstants.EVP_PKEY_EC) {
                     throw new InvalidKeyException("Signature initialized as " + engineType
                             + " (not EC)");
+                }
+                break;
+            case SM2:
+                if (pkeyType != NativeConstants.EVP_PKEY_SM2) {
+                    throw new InvalidKeyException("Signature initialized as " + engineType
+                            + " (not SM2)");
                 }
                 break;
             default:
@@ -337,6 +343,12 @@ public class OpenSSLSignature extends SignatureSpi {
     public static final class SHA512ECDSA extends OpenSSLSignature {
         public SHA512ECDSA() {
             super(EvpMdRef.SHA512.EVP_MD, EngineType.EC);
+        }
+    }
+
+    public static final class SM3withSM2 extends OpenSSLSignature {
+        public SM3withSM2() {
+            super(EvpMdRef.SM3.EVP_MD, EngineType.SM2);
         }
     }
 
