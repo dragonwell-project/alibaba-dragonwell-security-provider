@@ -16,6 +16,7 @@
 
 package org.conscrypt.javax.crypto;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -72,6 +73,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.conscrypt.Conscrypt;
 import org.conscrypt.TestUtils;
+import org.conscrypt.java.security.DefaultKeys;
 import org.conscrypt.java.security.StandardNames;
 import org.conscrypt.java.security.TestKeyStore;
 import org.junit.Assume;
@@ -3075,6 +3077,67 @@ public final class CipherTest {
     private void testRSA_ECB_NoPadding_GetParameters_NoneProvided_Success(String provider) throws Exception {
         Cipher c = Cipher.getInstance("RSA/ECB/NoPadding", provider);
         assertNull("Parameters should be null", c.getParameters());
+    }
+
+    /**
+     * This vector is simply "Tongsuo"
+     */
+    private static final byte[] SM2_Vector = new byte[] {
+        (byte) 0x54, (byte) 0x6f, (byte) 0x6e, (byte) 0x67, (byte) 0x73, (byte) 0x75,
+        (byte) 0x6f,
+    };
+
+    /**
+     * A possible ciphertext using SM2 of SM2_vector. Note that SM2 is
+     * randomized, so this won't be the exact ciphertext you'll get out of
+     * another encryption operation unless you use a fixed RNG.
+     */
+    private static final byte[] SM2_VectorCiphertext = {
+        (byte) 0x30, (byte) 0x70, (byte) 0x02, (byte) 0x21, (byte) 0x00, (byte) 0xd2, (byte) 0xa5, (byte) 0xec,
+        (byte) 0xa1, (byte) 0x2c, (byte) 0x4a, (byte) 0xd5, (byte) 0x9c, (byte) 0x7e, (byte) 0xf0, (byte) 0x02,
+        (byte) 0x0c, (byte) 0xeb, (byte) 0xc9, (byte) 0xd4, (byte) 0xdd, (byte) 0x11, (byte) 0xd0, (byte) 0x1f,
+        (byte) 0x36, (byte) 0x47, (byte) 0xce, (byte) 0x34, (byte) 0xfe, (byte) 0xae, (byte) 0x46, (byte) 0x28,
+        (byte) 0x79, (byte) 0x10, (byte) 0x6b, (byte) 0x0c, (byte) 0xb0, (byte) 0x02, (byte) 0x20, (byte) 0x78,
+        (byte) 0x16, (byte) 0xc2, (byte) 0x1d, (byte) 0x84, (byte) 0x97, (byte) 0x51, (byte) 0x24, (byte) 0xe6,
+        (byte) 0x80, (byte) 0x1b, (byte) 0x39, (byte) 0x43, (byte) 0x49, (byte) 0xd8, (byte) 0x67, (byte) 0x69,
+        (byte) 0xd3, (byte) 0x55, (byte) 0xb6, (byte) 0x12, (byte) 0x15, (byte) 0x3e, (byte) 0x37, (byte) 0x60,
+        (byte) 0x3a, (byte) 0xd4, (byte) 0x94, (byte) 0x58, (byte) 0xdc, (byte) 0x88, (byte) 0x1e, (byte) 0x04,
+        (byte) 0x20, (byte) 0x3e, (byte) 0x87, (byte) 0xb5, (byte) 0xfc, (byte) 0x74, (byte) 0xf0, (byte) 0x7a,
+        (byte) 0xb7, (byte) 0xa3, (byte) 0x31, (byte) 0x88, (byte) 0x49, (byte) 0x25, (byte) 0x2a, (byte) 0x28,
+        (byte) 0x3a, (byte) 0xed, (byte) 0x00, (byte) 0x02, (byte) 0xb9, (byte) 0x3b, (byte) 0x7c, (byte) 0xd3,
+        (byte) 0x57, (byte) 0x43, (byte) 0x60, (byte) 0x87, (byte) 0x9d, (byte) 0x1a, (byte) 0x67, (byte) 0xfc,
+        (byte) 0x9a, (byte) 0x04, (byte) 0x07, (byte) 0x23, (byte) 0x2d, (byte) 0x45, (byte) 0xb2, (byte) 0xf6,
+        (byte) 0x56, (byte) 0xaa,
+    };
+
+    @Test
+    public void testSM2_Encrypt_and_Decrypt_Success() throws Exception {
+        PublicKey pubKey = DefaultKeys.getPublicKey("SM2");
+        PrivateKey privKey = DefaultKeys.getPrivateKey("SM2");
+
+        Cipher cipher = Cipher.getInstance("SM2");
+        cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+        byte[] ciphertext = cipher.doFinal(SM2_Vector);
+        assertFalse("getOutputSize should return enough space for result",
+            cipher.getOutputSize(SM2_Vector.length) < ciphertext.length);
+
+        cipher.init(Cipher.DECRYPT_MODE, privKey);
+        byte[] plaintext = cipher.doFinal(ciphertext);
+        assertFalse("getOutputSize should return enough space for result",
+            cipher.getOutputSize(ciphertext.length) < plaintext.length);
+        assertArrayEquals("plaintext and decrypted ciphertext should equal", SM2_Vector, plaintext);
+    }
+
+    @Test
+    public void testSM2_Decrypt_Success() throws Exception {
+        PrivateKey privKey = DefaultKeys.getPrivateKey("SM2");
+        Cipher cipher = Cipher.getInstance("SM2");
+        cipher.init(Cipher.DECRYPT_MODE, privKey);
+        byte[] plaintext = cipher.doFinal(SM2_VectorCiphertext);
+
+        assertFalse("getOutputSize should return enough space for result",
+            cipher.getOutputSize(SM2_VectorCiphertext.length) < plaintext.length);
+        assertArrayEquals("plaintext and decrypted ciphertext should equal", SM2_Vector, plaintext);
     }
 
     /*

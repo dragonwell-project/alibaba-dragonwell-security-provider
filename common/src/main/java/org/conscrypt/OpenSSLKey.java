@@ -283,6 +283,8 @@ final class OpenSSLKey {
                 return new OpenSSLRSAPublicKey(this);
             case NativeConstants.EVP_PKEY_EC:
                 return new OpenSSLECPublicKey(this);
+            case NativeConstants.EVP_PKEY_SM2:
+                return new SM2PublicKey(this);
             default:
                 throw new NoSuchAlgorithmException("unknown PKEY type");
         }
@@ -316,6 +318,8 @@ final class OpenSSLKey {
                 return OpenSSLRSAPrivateKey.getInstance(this);
             case NativeConstants.EVP_PKEY_EC:
                 return new OpenSSLECPrivateKey(this);
+            case NativeConstants.EVP_PKEY_SM2:
+                return new SM2PrivateKey(this);
             default:
                 throw new NoSuchAlgorithmException("unknown PKEY type");
         }

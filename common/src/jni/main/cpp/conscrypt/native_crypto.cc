@@ -827,6 +827,9 @@ static jlong NativeCrypto_EVP_PKEY_new_EC_KEY(JNIEnv* env, jclass, jobject group
         ERR_clear_error();
         return 0;
     }
+    if (EC_GROUP_get_curve_name(group) == EVP_PKEY_SM2) {
+        EVP_PKEY_set_alias_type(pkey.get(), EVP_PKEY_SM2);
+    }
     OWNERSHIP_TRANSFERRED(eckey);
 
     JNI_TRACE("EVP_PKEY_new_EC_KEY(%p, %p, %p) => %p", group, pubkey, keyJavaBytes, pkey.get());
@@ -1812,6 +1815,9 @@ static jlong NativeCrypto_EC_KEY_generate_key(JNIEnv* env, jclass, jobject group
         ERR_clear_error();
         return 0;
     }
+    if (EC_GROUP_get_curve_name(group) == EVP_PKEY_SM2) {
+        EVP_PKEY_set_alias_type(pkey.get(), EVP_PKEY_SM2);
+    }
     OWNERSHIP_TRANSFERRED(eckey);
 
     JNI_TRACE("EC_KEY_generate_key(%p) => %p", group, pkey.get());
@@ -1828,7 +1834,7 @@ static jlong NativeCrypto_EC_KEY_get1_group(JNIEnv* env, jclass, jobject pkeyRef
         return 0;
     }
 
-    if (EVP_PKEY_id(pkey) != EVP_PKEY_EC) {
+    if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
         conscrypt::jniutil::throwRuntimeException(env, "not EC key");
         JNI_TRACE("EC_KEY_get1_group(%p) => not EC key (type == %d)", pkey, EVP_PKEY_id(pkey));
         return 0;
@@ -2758,8 +2764,8 @@ static jint evpPkeyEncryptDecrypt(JNIEnv* env,
     uint8_t* outBuf = reinterpret_cast<uint8_t*>(outBytes.get());
     const uint8_t* inBuf = reinterpret_cast<const uint8_t*>(inBytes.get());
     size_t outLength = outBytes.size() - outOffset;
-    if (!encrypt_decrypt_func(pkeyCtx, outBuf + outOffset, &outLength, inBuf + inOffset,
-                              static_cast<size_t>(inLength))) {
+    if (encrypt_decrypt_func(pkeyCtx, outBuf + outOffset, &outLength, inBuf + inOffset,
+                              static_cast<size_t>(inLength)) != 1) {
         JNI_TRACE("ctx=%p %s => threw exception", pkeyCtx, jniName);
         conscrypt::jniutil::throwExceptionFromBoringSSLError(
                 env, jniName, conscrypt::jniutil::throwBadPaddingException);

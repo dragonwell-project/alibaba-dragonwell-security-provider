@@ -69,6 +69,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.conscrypt.Conscrypt;
+import org.conscrypt.SM2PrivateKeySpec;
+import org.conscrypt.SM2PublicKeySpec;
 import org.conscrypt.TestUtils;
 import org.conscrypt.testing.BrokenProvider;
 import org.conscrypt.testing.OpaqueProvider;
@@ -151,6 +153,8 @@ public class SignatureTest {
                 || sigAlgorithmUpperCase.endsWith("RSA/PSS")
                 || sigAlgorithmUpperCase.endsWith("RSASSA-PSS")) {
             kpAlgorithm = "RSA";
+        } else if (sigAlgorithmUpperCase.endsWith("SM2")) {
+            kpAlgorithm = "SM2";
         } else {
             throw new Exception("Unknown KeyPair algorithm for Signature algorithm "
                                 + sigAlgorithm);
@@ -466,6 +470,7 @@ public class SignatureTest {
         (byte) 0x7d, (byte) 0x15, (byte) 0x44, (byte) 0x7e, (byte) 0xb5, (byte) 0x00, (byte) 0xd6, (byte) 0x45,
     };
 
+    /* Test data is: "This is a signed message from Kenny Root.\n" */
     private static final byte[] Vector2Data = new byte[] {
         (byte) 0x54, (byte) 0x68, (byte) 0x69, (byte) 0x73, (byte) 0x20, (byte) 0x69, (byte) 0x73, (byte) 0x20,
         (byte) 0x61, (byte) 0x20, (byte) 0x73, (byte) 0x69, (byte) 0x67, (byte) 0x6e, (byte) 0x65, (byte) 0x64,
@@ -1556,6 +1561,7 @@ public class SignatureTest {
         assertNotNull(Signature.getInstance("NONEwithRSA"));
         assertNotNull(Signature.getInstance("MD5withRSA"));
         assertNotNull(Signature.getInstance("SHA1withDSA"));
+        assertNotNull(Signature.getInstance("SM3withSM2"));
     }
 
     private void verify(Signature sig, PublicKey key, byte[] data, byte[] signature)
@@ -3065,6 +3071,90 @@ public class SignatureTest {
         sig.initVerify(pubKey);
         sig.update(Vector2Data);
         assertTrue("Signature must verify correctly", sig.verify(SHA256withDSA_Vector2Signature));
+    }
+
+    /*
+     * Test vectors generated with this private key:
+     *
+     * -----BEGIN PRIVATE KEY-----
+     * MIGHAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBG0wawIBAQQgXGWBMkkCrZw1Ggq6
+     * T5ilOB4ax0DCWfsWApdsxW/qhO+hRANCAASUrt0miIcKTltMX7p1lVwhbz4fHaYh
+     * jqkBs80S3ZfIOKWRQzFB+IfQv2R15QmDVAKPkDYgyUjLO/Qw6rQ+QK9t
+     * -----END PRIVATE KEY-----
+     *
+     */
+
+    private static final BigInteger SM2_S = new BigInteger(new byte[] {
+        (byte) 0x5c, (byte) 0x65, (byte) 0x81, (byte) 0x32, (byte) 0x49, (byte) 0x02, (byte) 0xad, (byte) 0x9c,
+        (byte) 0x35, (byte) 0x1a, (byte) 0x0a, (byte) 0xba, (byte) 0x4f, (byte) 0x98, (byte) 0xa5, (byte) 0x38,
+        (byte) 0x1e, (byte) 0x1a, (byte) 0xc7, (byte) 0x40, (byte) 0xc2, (byte) 0x59, (byte) 0xfb, (byte) 0x16,
+        (byte) 0x02, (byte) 0x97, (byte) 0x6c, (byte) 0xc5, (byte) 0x6f, (byte) 0xea, (byte) 0x84, (byte) 0xef,
+    });
+
+    private static final BigInteger SM2_Wx = new BigInteger(1, new byte[] {
+        (byte) 0x94, (byte) 0xae, (byte) 0xdd, (byte) 0x26, (byte) 0x88, (byte) 0x87, (byte) 0x0a, (byte) 0x4e,
+        (byte) 0x5b, (byte) 0x4c, (byte) 0x5f, (byte) 0xba, (byte) 0x75, (byte) 0x95, (byte) 0x5c, (byte) 0x21,
+        (byte) 0x6f, (byte) 0x3e, (byte) 0x1f, (byte) 0x1d, (byte) 0xa6, (byte) 0x21, (byte) 0x8e, (byte) 0xa9,
+        (byte) 0x01, (byte) 0xb3, (byte) 0xcd, (byte) 0x12, (byte) 0xdd, (byte) 0x97, (byte) 0xc8, (byte) 0x38,
+    });
+
+    private static final BigInteger SM2_Wy = new BigInteger(1, new byte[] {
+        (byte) 0xa5, (byte) 0x91, (byte) 0x43, (byte) 0x31, (byte) 0x41, (byte) 0xf8, (byte) 0x87, (byte) 0xd0,
+        (byte) 0xbf, (byte) 0x64, (byte) 0x75, (byte) 0xe5, (byte) 0x09, (byte) 0x83, (byte) 0x54, (byte) 0x02,
+        (byte) 0x8f, (byte) 0x90, (byte) 0x36, (byte) 0x20, (byte) 0xc9, (byte) 0x48, (byte) 0xcb, (byte) 0x3b,
+        (byte) 0xf4, (byte) 0x30, (byte) 0xea, (byte) 0xb4, (byte) 0x3e, (byte) 0x40, (byte) 0xaf, (byte) 0x6d,
+    });
+
+    private static final ECPoint SM2_W = new ECPoint(SM2_Wx, SM2_Wy);
+
+
+    /**
+     * A possible signature using SM3withSM2 of Vector2Data. Note that SM2 is
+     * randomized, so this won't be the exact signature you'll get out of
+     * another signing operation unless you use a fixed RNG.
+     */
+    private static final byte[] SM3withSM2_Vector2Signature = {
+        (byte) 0x30, (byte) 0x45, (byte) 0x02, (byte) 0x20, (byte) 0x70, (byte) 0x97, (byte) 0x79, (byte) 0xcd,
+        (byte) 0xb4, (byte) 0x0c, (byte) 0xa0, (byte) 0xbb, (byte) 0xc6, (byte) 0x14, (byte) 0x4e, (byte) 0x9a,
+        (byte) 0x9d, (byte) 0x64, (byte) 0xaf, (byte) 0xef, (byte) 0x9d, (byte) 0x80, (byte) 0x29, (byte) 0x7e,
+        (byte) 0xd4, (byte) 0xd1, (byte) 0xf6, (byte) 0x55, (byte) 0x2b, (byte) 0x23, (byte) 0x07, (byte) 0xe0,
+        (byte) 0x27, (byte) 0x3f, (byte) 0x16, (byte) 0x96, (byte) 0x02, (byte) 0x21, (byte) 0x00, (byte) 0xab,
+        (byte) 0x1b, (byte) 0x08, (byte) 0xe1, (byte) 0x94, (byte) 0x68, (byte) 0x83, (byte) 0x69, (byte) 0xfe,
+        (byte) 0xa6, (byte) 0x91, (byte) 0xc6, (byte) 0x0f, (byte) 0x2d, (byte) 0x74, (byte) 0x62, (byte) 0x6a,
+        (byte) 0xe6, (byte) 0xb4, (byte) 0x19, (byte) 0xbd, (byte) 0x9f, (byte) 0xf8, (byte) 0x21, (byte) 0x91,
+        (byte) 0xad, (byte) 0x29, (byte) 0x44, (byte) 0xa1, (byte) 0xe4, (byte) 0xb1, (byte) 0x29,
+    };
+
+    @Test
+    public void testSign_SM3withSM2_Key_Success() throws Exception {
+        KeyFactory kf = KeyFactory.getInstance("SM2");
+        SM2PrivateKeySpec keySpec = new SM2PrivateKeySpec(SM2_S);
+        PrivateKey privKey = kf.generatePrivate(keySpec);
+
+        Signature sig = Signature.getInstance("SM3withSM2");
+        sig.initSign(privKey);
+        sig.update(Vector2Data);
+
+        byte[] signature = sig.sign();
+        assertNotNull("Signature must not be null", signature);
+
+        SM2PublicKeySpec pubKeySpec = new SM2PublicKeySpec(SM2_W);
+        PublicKey pubKey = kf.generatePublic(pubKeySpec);
+        sig.initVerify(pubKey);
+        sig.update(Vector2Data);
+        assertTrue("Signature must verify correctly", sig.verify(signature));
+    }
+
+    @Test
+    public void testVerify_SM3withSM2_Key_Success() throws Exception {
+        KeyFactory kf = KeyFactory.getInstance("SM2");
+        SM2PublicKeySpec pubKeySpec = new SM2PublicKeySpec(SM2_W);
+        PublicKey pubKey = kf.generatePublic(pubKeySpec);
+
+        Signature sig = Signature.getInstance("SM3withSM2");
+        sig.initVerify(pubKey);
+        sig.update(Vector2Data);
+        assertTrue("Signature must verify correctly", sig.verify(SM3withSM2_Vector2Signature));
     }
 
     private final int THREAD_COUNT = 10;
