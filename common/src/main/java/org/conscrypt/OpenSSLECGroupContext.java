@@ -42,6 +42,7 @@ final class OpenSSLECGroupContext {
         ALIASES.put("1.3.132.0.34", "secp384r1");
         ALIASES.put("1.3.132.0.35", "secp521r1");
         ALIASES.put("1.2.840.10045.3.1.7", "prime256v1");
+        ALIASES.put("1.2.156.10197.1.301", "SM2");
     }
 
     private final NativeRef.EC_GROUP groupCtx;
@@ -81,6 +82,9 @@ final class OpenSSLECGroupContext {
 
     static OpenSSLECGroupContext getInstance(ECParameterSpec params)
             throws InvalidAlgorithmParameterException {
+        if (params instanceof SM2ParameterSpec) {
+            return OpenSSLECGroupContext.getCurveByName("SM2");
+        }
         String curveName = Platform.getCurveName(params);
         if (curveName != null) {
             return OpenSSLECGroupContext.getCurveByName(curveName);
@@ -173,6 +177,9 @@ final class OpenSSLECGroupContext {
 
     ECParameterSpec getECParameterSpec() {
         final String curveName = NativeCrypto.EC_GROUP_get_curve_name(groupCtx);
+        if ("SM2".equals(curveName)) {
+            return SM2ParameterSpec.instance();
+        }
 
         final byte[][] curveParams = NativeCrypto.EC_GROUP_get_curve(groupCtx);
         final BigInteger p = new BigInteger(curveParams[0]);
