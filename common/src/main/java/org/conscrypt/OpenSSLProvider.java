@@ -139,6 +139,8 @@ public class OpenSSLProvider extends Provider {
         put("AlgorithmParameters.PSS", PREFIX + "PSSParameters");
         put("AlgorithmParameters.EC", PREFIX + "ECParameters");
 
+        put("AlgorithmParameters.SM2", PREFIX + "SM2SignatureParameters");
+
         /* === Message Digests === */
         put("MessageDigest.SHA-1", PREFIX + "OpenSSLMessageDigestJDK$SHA1");
         put("Alg.Alias.MessageDigest.SHA1", "SHA-1");
@@ -226,6 +228,9 @@ public class OpenSSLProvider extends Provider {
         put("Alg.Alias.KeyPairGenerator.1.2.840.10045.2.1", "EC");
         put("Alg.Alias.KeyPairGenerator.1.3.133.16.840.63.0.2", "EC");
 
+        put("KeyPairGenerator.SM2", PREFIX + "SM2KeyPairGenerator");
+        put("Alg.Alias.KeyPairGenerator.1.2.156.10197.1.301", "SM2");
+
         put("KeyPairGenerator.XDH", PREFIX + "OpenSSLXDHKeyPairGenerator");
         put("Alg.Alias.KeyPairGenerator.1.3.101.110", "XDH");
 
@@ -238,6 +243,8 @@ public class OpenSSLProvider extends Provider {
         put("KeyFactory.EC", PREFIX + "OpenSSLECKeyFactory");
         put("Alg.Alias.KeyFactory.1.2.840.10045.2.1", "EC");
         put("Alg.Alias.KeyFactory.1.3.133.16.840.63.0.2", "EC");
+
+        put("KeyFactory.SM2", PREFIX + "SM2KeyFactory");
 
         put("KeyFactory.XDH", PREFIX + "OpenSSLXDHKeyFactory");
         put("Alg.Alias.KeyFactory.1.3.101.110", "XDH");
@@ -349,6 +356,8 @@ public class OpenSSLProvider extends Provider {
         put("Alg.Alias.Signature.OID.1.2.840.10045.4.3.4", "SHA512withECDSA");
         put("Alg.Alias.Signature.2.16.840.1.101.3.4.2.3with1.2.840.10045.2.1", "SHA512withECDSA");
 
+        putSignatureImplClass("SM3withSM2", "OpenSSLSignature$SM3withSM2");
+
         putSignatureImplClass("SHA1withRSA/PSS", "OpenSSLSignature$SHA1RSAPSS");
         put("Alg.Alias.Signature.SHA1withRSAandMGF1", "SHA1withRSA/PSS");
 
@@ -400,6 +409,8 @@ public class OpenSSLProvider extends Provider {
                 "RSA/ECB/OAEPWithSHA-512AndMGF1Padding", "OpenSSLCipherRSA$OAEP$SHA512");
         put("Alg.Alias.Cipher.RSA/None/OAEPWithSHA-512AndMGF1Padding",
                 "RSA/ECB/OAEPWithSHA-512AndMGF1Padding");
+
+        putSM2CipherImplClass("SM2", "SM2Cipher");
 
         /*
          * OpenSSL only supports a subset of modes, so we'll name them
@@ -600,6 +611,19 @@ public class OpenSSLProvider extends Provider {
                 + "|" + STANDARD_RSA_PRIVATE_KEY_INTERFACE_CLASS_NAME
                 + "|" + PREFIX + "OpenSSLRSAPublicKey"
                 + "|" + STANDARD_RSA_PUBLIC_KEY_INTERFACE_CLASS_NAME;
+        String supportedKeyFormats = null; // ignored -- filtered based on class only
+        putImplClassWithKeyConstraints(
+                "Cipher." + transformation,
+                PREFIX + className,
+                supportedKeyClasses,
+                supportedKeyFormats);
+    }
+
+    private void putSM2CipherImplClass(String transformation, String className) {
+        // Accept only keys for which any of the following is true:
+        // * the key is instance of SM2PrivateKey, SM2PublicKey.
+        String supportedKeyClasses = PREFIX + "SM2PrivateKey"
+                + "|" + PREFIX + "SM2PublicKey";
         String supportedKeyFormats = null; // ignored -- filtered based on class only
         putImplClassWithKeyConstraints(
                 "Cipher." + transformation,

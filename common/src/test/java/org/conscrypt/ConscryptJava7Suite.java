@@ -34,6 +34,7 @@ import org.conscrypt.java.security.AlgorithmParametersTestOAEP;
 import org.conscrypt.java.security.KeyFactoryTestDH;
 import org.conscrypt.java.security.KeyFactoryTestDSA;
 import org.conscrypt.java.security.KeyFactoryTestEC;
+import org.conscrypt.java.security.KeyFactoryTestSM2;
 import org.conscrypt.java.security.KeyFactoryTestRSA;
 import org.conscrypt.java.security.KeyPairGeneratorTest;
 import org.conscrypt.java.security.KeyPairGeneratorTestDH;
@@ -95,6 +96,7 @@ import org.junit.runners.Suite;
         KeyFactoryTestDH.class,
         KeyFactoryTestDSA.class,
         KeyFactoryTestEC.class,
+        KeyFactoryTestSM2.class,
         KeyFactoryTestRSA.class,
         KeyPairGeneratorTest.class,
         KeyPairGeneratorTestDH.class,

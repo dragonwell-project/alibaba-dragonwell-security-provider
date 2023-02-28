@@ -189,6 +189,14 @@ public class DefaultKeys {
             "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKoHwjEdyQBvyYUd/Oi+m05qO103dQdKBwj2qjz+f"
                 + "mC8y+cGAGwxMWgnc1xJYw767qY59R36o2TQlQHNI9d0CDA==");
 
+        private static final byte[] SM2_private = TestUtils.decodeBase64(
+            "MIGHAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBG0wawIBAQQgXGWBMkkCrZw1Ggq6T5ilOB4ax0DC"
+                + "WfsWApdsxW/qhO+hRANCAASUrt0miIcKTltMX7p1lVwhbz4fHaYhjqkBs80S3ZfIOKWRQz"
+                + "FB+IfQv2R15QmDVAKPkDYgyUjLO/Qw6rQ+QK9t");
+        private static final byte[] SM2_public = TestUtils.decodeBase64(
+            "MFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAElK7dJoiHCk5bTF+6dZVcIW8+Hx2mIY6pAbPNEt2X"
+                + "yDilkUMxQfiH0L9kdeUJg1QCj5A2IMlIyzv0MOq0PkCvbQ==");
+
     private static final byte[] X25519_private = new byte[] {
             (byte) 0x30, (byte) 0x2e, (byte) 0x02, (byte) 0x01, (byte) 0x00, (byte) 0x30, (byte) 0x05, (byte) 0x06,
             (byte) 0x03, (byte) 0x2b, (byte) 0x65, (byte) 0x6e, (byte) 0x04, (byte) 0x22, (byte) 0x04, (byte) 0x20,
@@ -217,6 +225,8 @@ public class DefaultKeys {
         keys.put("RSA_private", new PKCS8EncodedKeySpec(RSA_private));
         keys.put("EC_public", new X509EncodedKeySpec(EC_public));
         keys.put("EC_private", new PKCS8EncodedKeySpec(EC_private));
+        keys.put("SM2_public", new X509EncodedKeySpec(SM2_public));
+        keys.put("SM2_private", new PKCS8EncodedKeySpec(SM2_private));
         keys.put("XDH_public", new X509EncodedKeySpec(X25519_public));
         keys.put("XDH_private", new PKCS8EncodedKeySpec(X25519_private));
     }
