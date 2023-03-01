@@ -4,12 +4,12 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
-import net.tongsuo.TongsuoProvider;
+import com.alibaba.dragonwell.security.DragonwellSecurityProvider;
 
 public class SM4CipherExample {
     static {
         // install tongsuo provider
-        Security.addProvider(new TongsuoProvider());
+        Security.addProvider(new DragonwellSecurityProvider());
     }
 
     public static void main(String[] args) throws Exception {
@@ -18,7 +18,7 @@ public class SM4CipherExample {
         SecureRandom random = new SecureRandom();
 
         // algorithm/mode/padding
-        Cipher cipher = Cipher.getInstance("SM4/GCM/NoPadding", "Tongsuo_Security_Provider");
+        Cipher cipher = Cipher.getInstance("SM4/GCM/NoPadding", "Dragonwell_Security_Provider");
         byte[] key = new byte[16];
         random.nextBytes(key);
         byte[] iv = new byte[12];
