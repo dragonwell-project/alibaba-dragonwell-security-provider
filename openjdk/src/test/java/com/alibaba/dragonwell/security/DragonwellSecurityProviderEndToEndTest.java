@@ -14,12 +14,13 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
-
+import com.alibaba.dragonwell.security.DragonwellSecurity;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import org.junit.Test;
 
 import static org.conscrypt.TestUtils.readSM2PrivateKeyPemFile;
+import static org.conscrypt.TestUtils.openTestFile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -41,7 +42,7 @@ public class DragonwellSecurityProviderEndToEndTest {
 
         // Build a service CA
         X509Certificate ca = DragonwellX509Certificate
-                .fromX509PemInputStream(DragonwellSecurityProviderEndToEndTest.class.getResourceAsStream(SERVER_CA));
+                .fromX509PemInputStream(openTestFile(SERVER_CA));
         PrivateKey privateKey = readSM2PrivateKeyPemFile(PRIVATE_KEY);
 
         ks.setKeyEntry("default", privateKey, EMPTY_PASSWORD, new X509Certificate[]{ca});
@@ -69,11 +70,11 @@ public class DragonwellSecurityProviderEndToEndTest {
     }
 
     private SSLContext createClientSSLContext() throws Exception {
-        KeyStore ks = KeyStore.getInstance("PKCS12",new BouncyCastleProvider());
+        KeyStore ks = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
         ks.load(null, null);
 
         X509Certificate ca = DragonwellX509Certificate
-                .fromX509PemInputStream(DragonwellSecurityProviderEndToEndTest.class.getResourceAsStream(SERVER_CA));
+                .fromX509PemInputStream(openTestFile(SERVER_CA));
         ks.setCertificateEntry("CA", ca);
 
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());

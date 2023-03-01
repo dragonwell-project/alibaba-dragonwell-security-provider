@@ -420,7 +420,6 @@ class ConscryptFileDescriptorSocket extends OpenSSLSocketImpl
                 throw new CertificateException("Peer sent no certificate");
             }
             X509Certificate[] peerCertChain = SSLUtils.decodeX509CertificateChain(certChain);
-
             X509TrustManager x509tm = sslParameters.getX509TrustManager();
             if (x509tm == null) {
                 throw new CertificateException("No X.509 TrustManager");

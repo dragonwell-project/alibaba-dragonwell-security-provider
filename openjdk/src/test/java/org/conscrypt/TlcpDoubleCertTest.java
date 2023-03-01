@@ -14,8 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-import com.alibaba.dragonwell.security.TlcpKeyManagerImpl;
 import com.alibaba.dragonwell.security.DragonwellSecurityProvider;
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+import com.alibaba.dragonwell.security.DragonwellX509Certificate;
+import com.alibaba.dragonwell.security.DragonwellTlcpCertIndicate;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -86,7 +88,7 @@ public class TlcpDoubleCertTest {
 
     @Before
     public final void before() throws Exception {
-        Conscrypt.setUseEngineSocketByDefault(false);
+        DragonwellSecurity.setUseEngineSocketByDefault(false);
         // Initial cipher suit map.
         CIPHER_SUIT_MAP.put("ECC-SM2-WITH-SM4-SM3", "ECC-SM2-SM4-CBC-SM3");
         CIPHER_SUIT_MAP.put("ECC-SM2-SM4-CBC-SM3", "ECC-SM2-SM4-CBC-SM3");
@@ -96,7 +98,6 @@ public class TlcpDoubleCertTest {
         CIPHER_SUIT_MAP.put("ECDHE-SM2-SM4-GCM-SM3", "ECDHE-SM2-SM4-GCM-SM3");
 
         Security.addProvider(new DragonwellSecurityProvider());
-
         buildCaCert();
         buildClientKeyStore();
         buildServerKeyStore();
@@ -104,12 +105,12 @@ public class TlcpDoubleCertTest {
 
     @After
     public final void after() {
-        Conscrypt.setUseEngineSocketByDefault(true);
+        DragonwellSecurity.setUseEngineSocketByDefault(true);
     }
 
     private void buildCaCert() throws Exception {
-        caCert = OpenSSLX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(CA_CERT_PATH));
-        subCaCert = OpenSSLX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(SUB_CA_CERT_PATH));
+        caCert = DragonwellX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(CA_CERT_PATH));
+        subCaCert = DragonwellX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(SUB_CA_CERT_PATH));
     }
 
     private void buildClientKeyStore() throws Exception {
@@ -117,8 +118,8 @@ public class TlcpDoubleCertTest {
         clientSignPrivateKey = TestUtils.readSM2PrivateKeyPemFile(CLIENT_SIGN_KEY_PATH);
         clientEncPrivateKey = TestUtils.readSM2PrivateKeyPemFile(CLIENT_ENC_KEY_PATH);
         // build client sign and enc certification.
-        clientSignCert = OpenSSLX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(CLIENT_SIGN_CERT_PATH));
-        clientEncCert = OpenSSLX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(CLIENT_ENC_CERT_PATH));
+        clientSignCert = DragonwellX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(CLIENT_SIGN_CERT_PATH));
+        clientEncCert = DragonwellX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(CLIENT_ENC_CERT_PATH));
 
         X509Certificate[] clientSignCertChain = new X509Certificate[]{clientSignCert, subCaCert, caCert};
         X509Certificate[] clientEncCertChain = new X509Certificate[]{clientEncCert, subCaCert, caCert};
@@ -133,8 +134,8 @@ public class TlcpDoubleCertTest {
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("TlcpKeyManagerFactory", new DragonwellSecurityProvider());
         kmf.init(ks, EMPTY_PASSWORD);
         KeyManager clientKey = (kmf.getKeyManagers())[0];
-        if (clientKey instanceof TlcpKeyManagerImpl) {
-            TlcpKeyManagerImpl tlcpKeyManager = (TlcpKeyManagerImpl) clientKey;
+        if (clientKey instanceof DragonwellTlcpCertIndicate) {
+            DragonwellTlcpCertIndicate tlcpKeyManager = (DragonwellTlcpCertIndicate) clientKey;
             clientKeyManager = new KeyManager[]{clientKey};
             tlcpKeyManager.setTlcpEncAlias(CLIENT_ENC_ALIAS);
             tlcpKeyManager.setTlcpSignAlias(CLIENT_SIGN_ALIAS);
@@ -153,8 +154,8 @@ public class TlcpDoubleCertTest {
         serverSignPrivateKey = TestUtils.readSM2PrivateKeyPemFile(SERVER_SIGN_KEY_PATH);
         serverEncPrivateKey = TestUtils.readSM2PrivateKeyPemFile(SERVER_ENC_KEY_PATH);
         // build server sign and enc certification.
-        serverSignCert = OpenSSLX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(SERVER_SIGN_CERT_PATH));
-        serverEncCert = OpenSSLX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(SERVER_ENC_CERT_PATH));
+        serverSignCert = DragonwellX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(SERVER_SIGN_CERT_PATH));
+        serverEncCert = DragonwellX509Certificate.fromX509PemInputStream(TestUtils.openTestFile(SERVER_ENC_CERT_PATH));
 
         X509Certificate[] serverSignCertChain = new X509Certificate[]{serverSignCert, subCaCert, caCert};
         X509Certificate[] serverEncCertChain = new X509Certificate[]{serverEncCert, subCaCert, caCert};
@@ -169,8 +170,8 @@ public class TlcpDoubleCertTest {
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("TlcpKeyManagerFactory", new DragonwellSecurityProvider());
         kmf.init(ks, EMPTY_PASSWORD);
         KeyManager serverKey = (kmf.getKeyManagers())[0];
-        if (serverKey instanceof TlcpKeyManagerImpl) {
-            TlcpKeyManagerImpl tlcpKeyManager = (TlcpKeyManagerImpl) serverKey;
+        if (serverKey instanceof DragonwellTlcpCertIndicate) {
+            DragonwellTlcpCertIndicate tlcpKeyManager = (DragonwellTlcpCertIndicate) serverKey;
             serverKeyManager = new KeyManager[]{serverKey};
             tlcpKeyManager.setTlcpEncAlias(SERVER_ENC_ALIAS);
             tlcpKeyManager.setTlcpSignAlias(SERVER_SIGN_ALIAS);

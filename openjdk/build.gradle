@@ -238,7 +238,7 @@ def suiteClass = (javaError.toString() =~ /"1[.]7[.].*"/) ?
 
 test {
     include suiteClass, "org/conscrypt/ConscryptOpenJdkSuite.class"
-    include suiteClass, "net/tongsuo/TongsuoOpenJdkSuite.class"
+    include suiteClass, "com/alibaba/dragonwell/security/TongsuoOpenJdkSuite.class"
 }
 
 def testFdSocket = tasks.register("testFdSocket", Test) {
