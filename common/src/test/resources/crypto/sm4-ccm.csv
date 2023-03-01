@@ -1,0 +1,13 @@
+
+#
+# Copyright 2023 The Tongsuo Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://github.com/Tongsuo-Project/Tongsuo/blob/master/LICENSE.txt
+#
+# Data is in the format:
+# key,iv,plaintext,ciphertext,tag,aad
+# The first SM4 test vector is from IETF draft-ribose-cfrg-sm4
+0123456789abcdeffedcba9876543210,00001234567800000000abcd,aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbccccccccccccccccddddddddddddddddeeeeeeeeeeeeeeeeffffffffffffffffeeeeeeeeeeeeeeeeaaaaaaaaaaaaaaaa,48af93501fa62adbcd414cce6034d895dda1bf8f132f042098661572e7483094fd12e518ce062c98acee28d95df4416bed31a2f04476c18bb40c84a74b97dc5b,16842d4fa186f56ab33256971fa110f4,feedfacedeadbeeffeedfacedeadbeefabaddad2

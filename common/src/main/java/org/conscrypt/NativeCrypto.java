@@ -322,35 +322,22 @@ public final class NativeCrypto {
     static native void EVP_CIPHER_CTX_free(long ctx);
 
     // --- AEAD ----------------------------------------------------------------
-    static native long EVP_aead_aes_128_gcm();
 
-    static native long EVP_aead_aes_256_gcm();
+    static native int EVP_CIPHER_CTX_gcm_seal(long evpCipher, byte[] key, byte[] nonce, int tagLengthInBytes,
+                byte[] out, int outOffset, byte[] in, int inOffset, int inLength, byte[] ad)
+                throws ShortBufferException, BadPaddingException;
 
-    static native long EVP_aead_chacha20_poly1305();
+    static native int EVP_CIPHER_CTX_gcm_open(long evpCipher, byte[] key, byte[] nonce, int tagLengthInBytes,
+                byte[] out, int outOffset, byte[] in, int inOffset, int inLength, byte[] ad)
+                throws ShortBufferException, BadPaddingException;
 
-    static native long EVP_aead_aes_128_gcm_siv();
+    static native int EVP_CIPHER_CTX_ccm_seal(long evpCipher, byte[] key, byte[] nonce, int tagLengthInBytes,
+                byte[] out, int outOffset, byte[] in, int inOffset, int inLength, byte[] ad)
+                throws ShortBufferException, BadPaddingException;
 
-    static native long EVP_aead_aes_256_gcm_siv();
-
-    static native int EVP_AEAD_max_overhead(long evpAead);
-
-    static native int EVP_AEAD_nonce_length(long evpAead);
-
-    static native int EVP_AEAD_CTX_seal(long evpAead, byte[] key, int tagLengthInBytes, byte[] out,
-            int outOffset, byte[] nonce, byte[] in, int inOffset, int inLength, byte[] ad)
-            throws ShortBufferException, BadPaddingException;
-
-    static native int EVP_AEAD_CTX_seal_buf(long evpAead, byte[] key, int tagLengthInBytes, ByteBuffer out,
-                                            byte[] nonce, ByteBuffer input, byte[] ad)
-            throws ShortBufferException, BadPaddingException;
-
-    static native int EVP_AEAD_CTX_open(long evpAead, byte[] key, int tagLengthInBytes, byte[] out,
-            int outOffset, byte[] nonce, byte[] in, int inOffset, int inLength, byte[] ad)
-            throws ShortBufferException, BadPaddingException;
-
-    static native int EVP_AEAD_CTX_open_buf(long evpAead, byte[] key, int tagLengthInBytes, ByteBuffer out,
-                                            byte[] nonce, ByteBuffer input, byte[] ad)
-            throws ShortBufferException, BadPaddingException;
+    static native int EVP_CIPHER_CTX_ccm_open(long evpCipher, byte[] key, byte[] nonce, int tagLengthInBytes,
+                byte[] out, int outOffset, byte[] in, int inOffset, int inLength, byte[] ad)
+                throws ShortBufferException, BadPaddingException;
 
     // --- CMAC functions ------------------------------------------------------
 

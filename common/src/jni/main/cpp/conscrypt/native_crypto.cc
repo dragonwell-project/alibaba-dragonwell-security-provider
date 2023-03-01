@@ -3018,6 +3018,10 @@ static jlong NativeCrypto_EVP_get_cipherbyname(JNIEnv* env, jclass, jstring algo
         cipher = EVP_sm4_cfb();
     } else if (strcasecmp(alg, "sm4-ofb") == 0) {
         cipher = EVP_sm4_ofb();
+    } else if (strcasecmp(alg, "sm4-gcm") == 0) {
+        cipher = EVP_sm4_gcm();
+    } else if (strcasecmp(alg, "sm4-ccm") == 0) {
+        cipher = EVP_sm4_ccm();
     } else {
         JNI_TRACE("NativeCrypto_EVP_get_cipherbyname(%s) => error", alg);
         return 0;
@@ -3252,107 +3256,389 @@ static void NativeCrypto_EVP_CIPHER_CTX_free(JNIEnv* env, jclass, jlong ctxRef) 
     EVP_CIPHER_CTX_free(ctx);
 }
 
-static jlong NativeCrypto_EVP_aead_aes_128_gcm(JNIEnv* env, jclass) {
-    CHECK_ERROR_QUEUE_ON_RETURN;
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+static void gcm_seal(JNIEnv* env, const EVP_CIPHER* evpCipher, const uint8_t* key,
+                const uint8_t* nonce, size_t nonce_len, size_t tag_len, uint8_t* out,
+                size_t* out_len, uint8_t* in, size_t in_len, const uint8_t* aad, size_t aad_len) {
+    UniquePtr<EVP_CIPHER_CTX> ctx(EVP_CIPHER_CTX_new());
+    if (ctx.get() == nullptr) {
+        conscrypt::jniutil::throwOutOfMemory(env, "Unable to allocate cipher context");
+        JNI_TRACE("EVP_CIPHER_CTX_new => context allocation error");
+        return;
+    }
+
+    int tmplen = 0;
+    if (!EVP_CipherInit(ctx.get(), evpCipher, NULL, NULL, 1)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherInit");
+        JNI_TRACE("EVP_CipherInit => error initializing cipher");
+        return;
+    }
+
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_IVLEN, nonce_len, NULL)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_SET_IVLEN)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error setting ivlen");
+        return;
+    }
+
+    if (!EVP_CipherInit(ctx.get(), nullptr, key, nonce, 1)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherInit");
+        JNI_TRACE("EVP_CipherInit_ex => error initializing cipher");
+    }
+
+    // feed in aad
+    if (!EVP_CipherUpdate(ctx.get(), nullptr, (int *)&tmplen, aad, aad_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+
+    // feed in payload
+    if (!EVP_CipherUpdate(ctx.get(), out, (int *)&tmplen, in, in_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+    *out_len += tmplen;
+
+    if (!EVP_CipherFinal(ctx.get(), out+tmplen, (int *)&tmplen)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherFinal",
+                conscrypt::jniutil::throwBadPaddingException);
+        JNI_TRACE("ctx=%p EVP_CipherFinal => threw error", ctx.get());
+        return;
+    }
+    *out_len += tmplen;
+
+    // JCE expects tag after ciphertext
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_GET_TAG, tag_len, out+(*out_len))) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_GET_TAG)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error getting tag");
+        return;
+    }
+    *out_len += tag_len;
 }
 
-static jlong NativeCrypto_EVP_aead_aes_256_gcm(JNIEnv* env, jclass) {
-    CHECK_ERROR_QUEUE_ON_RETURN;
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+static void gcm_open(JNIEnv* env, const EVP_CIPHER* evpCipher, const uint8_t* key,
+                const uint8_t* nonce, size_t nonce_len, size_t tag_len, uint8_t* out,
+                size_t* out_len, uint8_t* in, size_t in_len, const uint8_t* aad, size_t aad_len) {
+    UniquePtr<EVP_CIPHER_CTX> ctx(EVP_CIPHER_CTX_new());
+    if (ctx.get() == nullptr) {
+        conscrypt::jniutil::throwOutOfMemory(env, "Unable to allocate cipher context");
+        JNI_TRACE("EVP_CIPHER_CTX_new => context allocation error");
+        return;
+    }
+    int tmplen = 0;
+
+    if (!EVP_CipherInit(ctx.get(), evpCipher, NULL, NULL, 0)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherInit");
+        JNI_TRACE("EVP_CipherInit => error initializing cipher");
+        return;
+    }
+
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_IVLEN, nonce_len, NULL)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_SET_IVLEN)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error setting ivlen");
+        return;
+    }
+
+    if (!EVP_CipherInit(ctx.get(), NULL, key, nonce, 0)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherInit");
+        JNI_TRACE("EVP_CipherInit => error initializing cipher");
+        return;
+    }
+
+    // feed in aad
+    if (!EVP_CipherUpdate(ctx.get(), NULL, (int *)&tmplen, aad, aad_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+
+    // feed in encrypted payload (tag stripped)
+    if (!EVP_CipherUpdate(ctx.get(), out, (int *)&tmplen, in, in_len-tag_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+    *out_len += tmplen;
+
+    // JCE expects tag after ciphertext
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_TAG, tag_len, in+in_len-tag_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_SET_TAG)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error setting tag");
+        return;
+    }
+
+    if (!EVP_CipherFinal(ctx.get(), out + tmplen, (int *)&tmplen)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherFinal",
+                conscrypt::jniutil::throwBadPaddingException);
+        JNI_TRACE("ctx=%p EVP_CipherFinal => threw error", ctx.get());
+        return;
+    }
+    *out_len += tmplen;
 }
 
-static jlong NativeCrypto_EVP_aead_chacha20_poly1305(JNIEnv* env, jclass) {
-    CHECK_ERROR_QUEUE_ON_RETURN;
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+static void ccm_seal(JNIEnv* env, const EVP_CIPHER* evpCipher, const uint8_t* key,
+                const uint8_t* nonce, size_t nonce_len, size_t tag_len, uint8_t* out,
+                size_t* out_len, uint8_t* in, size_t in_len, const uint8_t* aad, size_t aad_len) {
+    UniquePtr<EVP_CIPHER_CTX> ctx(EVP_CIPHER_CTX_new());
+    if (ctx.get() == nullptr) {
+        conscrypt::jniutil::throwOutOfMemory(env, "Unable to allocate cipher context");
+        JNI_TRACE("EVP_CIPHER_CTX_new => context allocation error");
+        return;
+    }
+    int tmplen = 0;
+
+    if (!EVP_CipherInit(ctx.get(), evpCipher, NULL, NULL, 1)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherInit");
+        JNI_TRACE("EVP_CipherInit => error initializing cipher");
+        return;
+    }
+
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_IVLEN, nonce_len, NULL)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_SET_IVLEN)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error setting ivlen");
+        return;
+    }
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_TAG, tag_len, NULL)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_SET_TAG)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error setting tagLen");
+        return;
+    }
+
+    if (!EVP_CipherInit(ctx.get(), NULL, key, nonce, 1)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherInit");
+        JNI_TRACE("EVP_CipherInit => error initializing cipher");
+        return;
+    }
+
+    // set payload length
+    if (!EVP_CipherUpdate(ctx.get(), NULL, (int *)&tmplen, NULL, in_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+    // feed in aad
+    if (!EVP_CipherUpdate(ctx.get(), NULL, (int *)&tmplen, aad, aad_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+
+    // feed in payload
+    if (!EVP_CipherUpdate(ctx.get(), out, (int *)&tmplen, in, in_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+    *out_len += tmplen;
+
+    if (!EVP_CipherFinal(ctx.get(), out+tmplen, (int *)&tmplen)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherFinal",
+                conscrypt::jniutil::throwBadPaddingException);
+        JNI_TRACE("ctx=%p EVP_CipherFinal => threw error", ctx.get());
+        return;
+    }
+    *out_len += tmplen;
+
+    // JCE expects tag after ciphertext
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_GET_TAG, tag_len, out+(*out_len))) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_GET_TAG)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error getting tag");
+        return;
+    }
+    *out_len += tag_len;
 }
 
-static jlong NativeCrypto_EVP_aead_aes_128_gcm_siv(JNIEnv* env, jclass) {
-    CHECK_ERROR_QUEUE_ON_RETURN;
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+static void ccm_open(JNIEnv* env, const EVP_CIPHER* evpCipher, const uint8_t* key,
+                const uint8_t* nonce, size_t nonce_len, size_t tag_len, uint8_t* out,
+                size_t* out_len, uint8_t* in, size_t in_len, const uint8_t* aad, size_t aad_len) {
+    UniquePtr<EVP_CIPHER_CTX> ctx(EVP_CIPHER_CTX_new());
+    if (ctx.get() == nullptr) {
+        conscrypt::jniutil::throwOutOfMemory(env, "Unable to allocate cipher context");
+        JNI_TRACE("EVP_CIPHER_CTX_new => context allocation error");
+        return;
+    }
+    int tmplen = 0;
+
+    if (!EVP_CipherInit(ctx.get(), evpCipher, NULL, NULL, 0)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherInit");
+        JNI_TRACE("EVP_CipherInit => error initializing cipher");
+        return;
+    }
+
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_IVLEN, nonce_len, NULL)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_SET_IVLEN)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error setting ivlen");
+        return;
+    }
+    // JCE expects tag after ciphertext
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_TAG, tag_len, in+in_len-tag_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(
+        env, "EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_SET_TAG)",
+        conscrypt::jniutil::throwInvalidAlgorithmParameterException);
+        JNI_TRACE("EVP_CIPHER_CTX_ctrl => error setting tag");
+        return;
+    }
+
+    if (!EVP_CipherInit(ctx.get(), NULL, key, nonce, 0)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherInit");
+        JNI_TRACE("EVP_CipherInit => error initializing cipher");
+        return;
+    }
+
+    // set ciphertext length
+    if (!EVP_CipherUpdate(ctx.get(), NULL, (int *)&tmplen, NULL, in_len-tag_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+
+    // feed in aad
+    if (!EVP_CipherUpdate(ctx.get(), NULL, (int *)&tmplen, aad, aad_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+
+    // feed in encrypted payload (tag stripped)
+    if (!EVP_CipherUpdate(ctx.get(), out, (int *)&tmplen, in, in_len-tag_len)) {
+        conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "EVP_CipherUpdate");
+        JNI_TRACE("ctx=%p EVP_CipherUpdate => threw error", ctx.get());
+        return;
+    }
+
+    *out_len += tmplen;
 }
 
-static jlong NativeCrypto_EVP_aead_aes_256_gcm_siv(JNIEnv* env, jclass) {
-    CHECK_ERROR_QUEUE_ON_RETURN;
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
-}
+typedef void (*evp_aead_op_func)(JNIEnv* env, const EVP_CIPHER* evpCipher, const uint8_t* key,
+                        const uint8_t* nonce, size_t nonce_len, size_t tag_len, uint8_t* out,
+                        size_t* out_len, uint8_t* in, size_t in_len, const uint8_t* aad, size_t aad_len);
 
-static jint NativeCrypto_EVP_AEAD_max_overhead(JNIEnv* env, jclass, jlong evpAeadRef) {
-    CHECK_ERROR_QUEUE_ON_RETURN;
-    if (evpAeadRef == 0) {
-        conscrypt::jniutil::throwNullPointerException(env, "evpAead == null");
+static jint evp_aead_op(JNIEnv* env, jlong evpCipherRef, jbyteArray keyArray, jbyteArray nonceArray,
+                    jint tagLen, jbyteArray outArray, jint outOffset, jbyteArray inArray, jint inOffset,
+                    jint inLength, jbyteArray aadArray, evp_aead_op_func realFunc) {
+    const EVP_CIPHER* evpCipher = reinterpret_cast<const EVP_CIPHER*>(evpCipherRef);
+    JNI_TRACE("evp_aead_op(%p, %p, %p, %d, %p, %d, %p, %d, %d, %p)", evpCipher, keyArray, nonceArray,
+              tagLen, outArray, outOffset, inArray, inOffset, inLength, aadArray);
+
+
+    ScopedByteArrayRW outBytes(env, outArray);
+    if (outBytes.get() == nullptr) {
         return 0;
     }
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
-}
 
-static jint NativeCrypto_EVP_AEAD_nonce_length(JNIEnv* env, jclass, jlong evpAeadRef) {
-    CHECK_ERROR_QUEUE_ON_RETURN;
-    if (evpAeadRef == 0) {
-        conscrypt::jniutil::throwNullPointerException(env, "evpAead == null");
+    if (ARRAY_OFFSET_INVALID(outBytes, outOffset)) {
+        JNI_TRACE("evp_aead_op(%p, %p, %p, %d, %p, %d, %p, %d, %d, %p) => out offset invalid",
+                  evpCipher, keyArray, nonceArray, tagLen, outArray, outOffset, inArray, inOffset,
+                  inLength, aadArray);
+        conscrypt::jniutil::throwException(env, "java/lang/ArrayIndexOutOfBoundsException", "out");
         return 0;
     }
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+
+    ScopedByteArrayRW inBytes(env, inArray);
+    if (inBytes.get() == nullptr) {
+        return 0;
+    }
+
+    if (ARRAY_OFFSET_LENGTH_INVALID(inBytes, inOffset, inLength)) {
+        JNI_TRACE(
+                "evp_aead_op(%p, %p, %p, %d, %p, %d, %p, %d, %d, %p) => in offset/length "
+                "invalid",
+                evpCipher, keyArray, nonceArray, tagLen, outArray, outOffset, inArray, inOffset,
+                inLength, aadArray);
+        conscrypt::jniutil::throwException(env, "java/lang/ArrayIndexOutOfBoundsException", "in");
+        return 0;
+    }
+
+    ScopedByteArrayRO keyBytes(env, keyArray);
+    if (keyBytes.get() == nullptr) {
+        return 0;
+    }
+
+    std::unique_ptr<ScopedByteArrayRO> aad;
+    const uint8_t* aad_chars = nullptr;
+    size_t aad_chars_size = 0;
+    if (aadArray != nullptr) {
+        aad.reset(new ScopedByteArrayRO(env, aadArray));
+        aad_chars = reinterpret_cast<const uint8_t*>(aad->get());
+        if (aad_chars == nullptr) {
+            return 0;
+        }
+        aad_chars_size = aad->size();
+    }
+
+    ScopedByteArrayRO nonceBytes(env, nonceArray);
+    if (nonceBytes.get() == nullptr) {
+        return 0;
+    }
+
+    const uint8_t* keyTmp = reinterpret_cast<const uint8_t*>(keyBytes.get());
+    const uint8_t* nonceTmp = reinterpret_cast<const uint8_t*>(nonceBytes.get());
+    uint8_t* outTmp = reinterpret_cast<uint8_t*>(outBytes.get());
+    uint8_t* inTmp = reinterpret_cast<uint8_t*>(inBytes.get());
+
+    size_t actualOutLength = 0;
+
+    realFunc(env, evpCipher, keyTmp, nonceTmp, nonceBytes.size(), tagLen,
+        outTmp+outOffset, &actualOutLength, inTmp+inOffset, inLength,
+        aad_chars, aad_chars_size);
+
+    return static_cast<jint>(actualOutLength);
 }
 
-static jint NativeCrypto_EVP_AEAD_CTX_seal(JNIEnv* env, jclass, jlong evpAeadRef,
-                                           jbyteArray keyArray, jint tagLen, jbyteArray outArray,
-                                           jint outOffset, jbyteArray nonceArray,
+static jint NativeCrypto_EVP_CIPHER_CTX_gcm_seal(JNIEnv* env, jclass, jlong evpCipherRef,
+                                           jbyteArray keyArray, jbyteArray nonceArray,
+                                           jint tagLen, jbyteArray outArray, jint outOffset,
                                            jbyteArray inArray, jint inOffset, jint inLength,
                                            jbyteArray aadArray) {
     CHECK_ERROR_QUEUE_ON_RETURN;
-    if (evpAeadRef == 0) {
-        conscrypt::jniutil::throwNullPointerException(env, "evpAead == null");
-        return 0;
-    }
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+    return evp_aead_op(env, evpCipherRef, keyArray, nonceArray, tagLen, outArray, outOffset,
+                        inArray, inOffset, inLength, aadArray, gcm_seal);
 }
 
-static jint NativeCrypto_EVP_AEAD_CTX_open(JNIEnv* env, jclass, jlong evpAeadRef,
-                                           jbyteArray keyArray, jint tagLen, jbyteArray outArray,
-                                           jint outOffset, jbyteArray nonceArray,
+static jint NativeCrypto_EVP_CIPHER_CTX_gcm_open(JNIEnv* env, jclass, jlong evpCipherRef,
+                                           jbyteArray keyArray, jbyteArray nonceArray,
+                                           jint tagLen, jbyteArray outArray, jint outOffset,
                                            jbyteArray inArray, jint inOffset, jint inLength,
                                            jbyteArray aadArray) {
     CHECK_ERROR_QUEUE_ON_RETURN;
-    if (evpAeadRef == 0) {
-        conscrypt::jniutil::throwNullPointerException(env, "evpAead == null");
-        return 0;
-    }
-
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+    return evp_aead_op(env, evpCipherRef, keyArray, nonceArray, tagLen, outArray, outOffset,
+                        inArray, inOffset, inLength, aadArray, gcm_open);
 }
 
-static jint NativeCrypto_EVP_AEAD_CTX_seal_buf(JNIEnv* env, jclass, jlong evpAeadRef,
-                                           jbyteArray keyArray, jint tagLen, jobject outBuffer,
-                                           jbyteArray nonceArray, jobject inBuffer, jbyteArray aadArray) {
+static jint NativeCrypto_EVP_CIPHER_CTX_ccm_seal(JNIEnv* env, jclass, jlong evpCipherRef,
+                                           jbyteArray keyArray, jbyteArray nonceArray,
+                                           jint tagLen, jbyteArray outArray, jint outOffset,
+                                           jbyteArray inArray, jint inOffset, jint inLength,
+                                           jbyteArray aadArray) {
     CHECK_ERROR_QUEUE_ON_RETURN;
-    if (evpAeadRef == 0) {
-        conscrypt::jniutil::throwNullPointerException(env, "evpAead == null");
-        return 0;
-    }
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+    return evp_aead_op(env, evpCipherRef, keyArray, nonceArray, tagLen, outArray, outOffset,
+                        inArray, inOffset, inLength, aadArray, ccm_seal);
 }
 
-static jint NativeCrypto_EVP_AEAD_CTX_open_buf(JNIEnv* env, jclass, jlong evpAeadRef,
-                                           jbyteArray keyArray, jint tagLen, jobject outBuffer,
-                                           jbyteArray nonceArray, jobject inBuffer, jbyteArray aadArray) {
+static jint NativeCrypto_EVP_CIPHER_CTX_ccm_open(JNIEnv* env, jclass, jlong evpCipherRef,
+                                           jbyteArray keyArray, jbyteArray nonceArray,
+                                           jint tagLen, jbyteArray outArray, jint outOffset,
+                                           jbyteArray inArray, jint inOffset, jint inLength,
+                                           jbyteArray aadArray) {
     CHECK_ERROR_QUEUE_ON_RETURN;
-    if (evpAeadRef == 0) {
-        conscrypt::jniutil::throwNullPointerException(env, "evpAead == null");
-        return 0;
-    }
-    conscrypt::jniutil::throwRuntimeException(env, "not supported by Tongsuo");
-    return 0;
+    return evp_aead_op(env, evpCipherRef, keyArray, nonceArray, tagLen, outArray, outOffset,
+                        inArray, inOffset, inLength, aadArray, ccm_open);
 }
 
 static jlong NativeCrypto_CMAC_CTX_new(JNIEnv* env, jclass) {
@@ -9638,17 +9924,23 @@ static JNINativeMethod sNativeCryptoMethods[] = {
         CONSCRYPT_NATIVE_METHOD(EVP_CIPHER_CTX_set_padding, "(" REF_EVP_CIPHER_CTX "Z)V"),
         CONSCRYPT_NATIVE_METHOD(EVP_CIPHER_CTX_set_key_length, "(" REF_EVP_CIPHER_CTX "I)V"),
         CONSCRYPT_NATIVE_METHOD(EVP_CIPHER_CTX_free, "(J)V"),
-        CONSCRYPT_NATIVE_METHOD(EVP_aead_aes_128_gcm, "()J"),
-        CONSCRYPT_NATIVE_METHOD(EVP_aead_aes_256_gcm, "()J"),
-        CONSCRYPT_NATIVE_METHOD(EVP_aead_chacha20_poly1305, "()J"),
-        CONSCRYPT_NATIVE_METHOD(EVP_aead_aes_128_gcm_siv, "()J"),
-        CONSCRYPT_NATIVE_METHOD(EVP_aead_aes_256_gcm_siv, "()J"),
-        CONSCRYPT_NATIVE_METHOD(EVP_AEAD_max_overhead, "(J)I"),
-        CONSCRYPT_NATIVE_METHOD(EVP_AEAD_nonce_length, "(J)I"),
-        CONSCRYPT_NATIVE_METHOD(EVP_AEAD_CTX_seal, "(J[BI[BI[B[BII[B)I"),
-        CONSCRYPT_NATIVE_METHOD(EVP_AEAD_CTX_open, "(J[BI[BI[B[BII[B)I"),
-        CONSCRYPT_NATIVE_METHOD(EVP_AEAD_CTX_seal_buf, "(J[BILjava/nio/ByteBuffer;[BLjava/nio/ByteBuffer;[B)I"),
-        CONSCRYPT_NATIVE_METHOD(EVP_AEAD_CTX_open_buf, "(J[BILjava/nio/ByteBuffer;[BLjava/nio/ByteBuffer;[B)I"),
+        // BEGIN { not supported by Tongsuo }
+        // CONSCRYPT_NATIVE_METHOD(EVP_aead_aes_128_gcm, "()J"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_aead_aes_256_gcm, "()J"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_aead_chacha20_poly1305, "()J"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_aead_aes_128_gcm_siv, "()J"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_aead_aes_256_gcm_siv, "()J"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_AEAD_max_overhead, "(J)I"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_AEAD_nonce_length, "(J)I"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_AEAD_CTX_seal, "(J[BI[BI[B[BII[B)I"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_AEAD_CTX_open, "(J[BI[BI[B[BII[B)I"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_AEAD_CTX_seal_buf, "(J[BILjava/nio/ByteBuffer;[BLjava/nio/ByteBuffer;[B)I"),
+        // CONSCRYPT_NATIVE_METHOD(EVP_AEAD_CTX_open_buf, "(J[BILjava/nio/ByteBuffer;[BLjava/nio/ByteBuffer;[B)I"),
+        // END { not supported by Tongsuo }
+        CONSCRYPT_NATIVE_METHOD(EVP_CIPHER_CTX_gcm_seal, "(J[B[BI[BI[BII[B)I"),
+        CONSCRYPT_NATIVE_METHOD(EVP_CIPHER_CTX_gcm_open, "(J[B[BI[BI[BII[B)I"),
+        CONSCRYPT_NATIVE_METHOD(EVP_CIPHER_CTX_ccm_seal, "(J[B[BI[BI[BII[B)I"),
+        CONSCRYPT_NATIVE_METHOD(EVP_CIPHER_CTX_ccm_open, "(J[B[BI[BI[BII[B)I"),
         CONSCRYPT_NATIVE_METHOD(HMAC_CTX_new, "()J"),
         CONSCRYPT_NATIVE_METHOD(HMAC_CTX_free, "(J)V"),
         CONSCRYPT_NATIVE_METHOD(HMAC_Init_ex, "(" REF_HMAC_CTX "[BJ)V"),
