@@ -294,7 +294,6 @@ class ConscryptFileDescriptorSocket extends OpenSSLSocketImpl
             Platform.countTlsHandshake(false, activeSession.getProtocol(),
                     activeSession.getCipherSuite(),
                     Platform.getMillisSinceBoot() - handshakeStartedMillis);
-
             throw(SSLHandshakeException) new SSLHandshakeException("Handshake failed").initCause(e);
         } finally {
             // on exceptional exit, treat the socket as closed

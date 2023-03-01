@@ -11,27 +11,27 @@ package net.tongsuo;
 
 import javax.net.ssl.*;
 import java.io.*;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.Security;
+import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
-import java.util.stream.Collectors;
 
 import net.tongsuo.TongsuoX509Certificate;
 import net.tongsuo.TongsuoProvider;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import org.junit.Test;
 
+import static org.conscrypt.TestUtils.openTestFile;
+import static org.conscrypt.TestUtils.readSM2PrivateKeyPemFile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TongsuoProviderEndToEndTest {
     private static final char[] EMPTY_PASSWORD = new char[0];
     private static final String SSL_13_TYPE = "TLSv1.3";
-    private static final String SERVER_CA = "/cert/sm2-root.crt";
-    private static final String PRIVATE_KEY = "/cert/sm2-root.key";
+    private static final String SERVER_CA = "cert/sm2-root.crt";
+    private static final String PRIVATE_KEY = "cert/sm2-root.key";
     private static final String CIPHER_SUITE = "TLS_SM4_GCM_SM3";
     private static final String HELLO_REQUEST = "hello request";
     private static final String HELLO_RESPONSE = "hello response";
@@ -40,27 +40,21 @@ public class TongsuoProviderEndToEndTest {
 
     private SSLContext createServerSSLContext() throws Exception {
         // Create an empty keystore
-        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        KeyStore ks = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
         ks.load(null, null);
 
         // Build a service CA
-        X509Certificate ca = TongsuoX509Certificate
-                .fromX509PemInputStream(TongsuoProviderEndToEndTest.class.getResourceAsStream(SERVER_CA));
-        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-        String privateKey = new BufferedReader(new InputStreamReader(TongsuoProviderEndToEndTest.class.getResourceAsStream(PRIVATE_KEY)))
-        .lines().collect(Collectors.joining("\n"));
-        Reader rdr = new StringReader(privateKey);
-        Object parsed = new org.bouncycastle.openssl.PEMParser(rdr).readObject();
-        KeyPair pair = new org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter().getKeyPair((org.bouncycastle.openssl.PEMKeyPair) parsed);
+        X509Certificate ca = TongsuoX509Certificate.fromX509PemInputStream(openTestFile(SERVER_CA));
+        PrivateKey privateKey = readSM2PrivateKeyPemFile(PRIVATE_KEY);
 
-        ks.setKeyEntry("default", pair.getPrivate(), EMPTY_PASSWORD, new X509Certificate[]{ca});
+        ks.setKeyEntry("default", privateKey, EMPTY_PASSWORD, new X509Certificate[]{ca});
         ks.setCertificateEntry("CA", ca);
 
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init(ks);
         TrustManager[] tms = tmf.getTrustManagers();
 
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         kmf.init(ks, EMPTY_PASSWORD);
         KeyManager[] kms = kmf.getKeyManagers();
 
@@ -78,11 +72,11 @@ public class TongsuoProviderEndToEndTest {
     }
 
     private SSLContext createClientSSLContext() throws Exception {
-        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        KeyStore ks = KeyStore.getInstance("PKCS12",new BouncyCastleProvider());
         ks.load(null, null);
 
         X509Certificate ca = TongsuoX509Certificate
-                .fromX509PemInputStream(TongsuoProviderEndToEndTest.class.getResourceAsStream(SERVER_CA));
+                .fromX509PemInputStream(openTestFile(SERVER_CA));
         ks.setCertificateEntry("CA", ca);
 
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());

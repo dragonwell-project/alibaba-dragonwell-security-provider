@@ -48,7 +48,7 @@ jobs:
       - name: Build Tongsuo831 on Linux
         working-directory: ./Tongsuo831
         run: |
-          ./config --prefix=$TONGSUO_HOME enable-weak-ssl-ciphers
+          ./config --prefix=$TONGSUO_HOME enable-weak-ssl-ciphers enable-ntls
           make -s -j4
           make install
 

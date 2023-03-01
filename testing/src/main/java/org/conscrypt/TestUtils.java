@@ -65,7 +65,7 @@ import org.conscrypt.java.security.StandardNames;
 import org.conscrypt.java.security.TestKeyStore;
 import org.conscrypt.testing.Streams;
 import org.junit.Assume;
-import sun.misc.BASE64Decoder;
+import java.util.Base64;
 
 
 /**
@@ -277,9 +277,9 @@ public final class TestUtils {
             }
             sb.append(line).append("\n");
         }
-        String ecKey = sb.toString();
-        BASE64Decoder base64decoder = new BASE64Decoder();
-        byte[] keyByte = base64decoder.decodeBuffer(ecKey);
+        String ecKey = sb.toString().replaceAll("\\r\\n|\\r|\\n", "");
+        Base64.Decoder base64Decoder = Base64.getDecoder();
+        byte[] keyByte = base64Decoder.decode(ecKey.getBytes(StandardCharsets.UTF_8));
         PKCS8EncodedKeySpec eks2 = new PKCS8EncodedKeySpec(keyByte);
         KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
         PrivateKey privateKey = keyFactory.generatePrivate(eks2);

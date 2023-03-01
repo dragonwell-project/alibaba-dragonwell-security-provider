@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContextSpi;
 import javax.net.ssl.SSLEngine;
@@ -55,6 +56,8 @@ public abstract class OpenSSLContextImpl extends SSLContextSpi {
 
     SSLParametersImpl sslParameters;
 
+    private final boolean enableTlcp;
+
     /** Allows outside callers to get the preferred SSLContext. */
     static OpenSSLContextImpl getPreferred() {
         return new TLSv13();
@@ -62,21 +65,24 @@ public abstract class OpenSSLContextImpl extends SSLContextSpi {
 
     OpenSSLContextImpl(String[] protocols) {
         this.protocols = protocols;
-        clientSessionContext = new ClientSessionContext();
-        serverSessionContext = new ServerSessionContext();
+        this.enableTlcp = Arrays.asList(protocols).contains(NativeCrypto.SUPPORTED_PROTOCOL_TLCP);
+        clientSessionContext = new ClientSessionContext(this.enableTlcp);
+        serverSessionContext = new ServerSessionContext(this.enableTlcp);
     }
 
     /**
      * Constuctor for the DefaultSSLContextImpl.  The unused boolean parameter is solely to
      * indicate that this constructor is desired.
+     * Default OpenSSLContextImpl should never enable TLCP mode.
      */
     OpenSSLContextImpl(String[] protocols, boolean unused)
             throws GeneralSecurityException, IOException {
         synchronized (DefaultSSLContextImpl.class) {
             this.protocols = null;
+            this.enableTlcp = false;
             if (defaultSslContextImpl == null) {
-                clientSessionContext = new ClientSessionContext();
-                serverSessionContext = new ServerSessionContext();
+                clientSessionContext = new ClientSessionContext(false);
+                serverSessionContext = new ServerSessionContext(false);
                 defaultSslContextImpl = (DefaultSSLContextImpl) this;
             } else {
                 clientSessionContext =
@@ -86,7 +92,7 @@ public abstract class OpenSSLContextImpl extends SSLContextSpi {
             }
             sslParameters = new SSLParametersImpl(defaultSslContextImpl.getKeyManagers(),
                     defaultSslContextImpl.getTrustManagers(), null, clientSessionContext,
-                    serverSessionContext, protocols);
+                    serverSessionContext, protocols, false);
         }
     }
 
@@ -104,7 +110,7 @@ public abstract class OpenSSLContextImpl extends SSLContextSpi {
     public void engineInit(KeyManager[] kms, TrustManager[] tms, SecureRandom sr)
             throws KeyManagementException {
         sslParameters = new SSLParametersImpl(
-                kms, tms, sr, clientSessionContext, serverSessionContext, protocols);
+                kms, tms, sr, clientSessionContext, serverSessionContext, protocols, enableTlcp);
     }
 
     @Override
@@ -186,6 +192,12 @@ public abstract class OpenSSLContextImpl extends SSLContextSpi {
     public static final class TLSv1 extends OpenSSLContextImpl {
         public TLSv1() {
             super(NativeCrypto.TLSV1_PROTOCOLS);
+        }
+    }
+
+    public static final class TLCP extends OpenSSLContextImpl {
+        public TLCP() {
+            super(NativeCrypto.TLCP_PROTOCOLS);
         }
     }
 }

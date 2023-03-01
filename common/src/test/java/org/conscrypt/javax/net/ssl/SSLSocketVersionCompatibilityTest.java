@@ -1608,6 +1608,9 @@ public class SSLSocketVersionCompatibilityTest {
                 new ArrayList<Pair<String, SSLSocketFactory>>();
         result.add(Pair.of("default", (SSLSocketFactory) SSLSocketFactory.getDefault()));
         for (String sslContextProtocol : StandardNames.SSL_CONTEXT_PROTOCOLS) {
+            if (sslContextProtocol.equals("TLCP")) {
+                continue;
+            }
             SSLContext sslContext = SSLContext.getInstance(sslContextProtocol);
             if (StandardNames.SSL_CONTEXT_PROTOCOLS_DEFAULT.equals(sslContextProtocol)) {
                 continue;

@@ -61,6 +61,17 @@ v1.0-1.3 are all enabled; the others return a context with TLS v1.0-1.2 enabled.
   * `TLS_CHACHA20_POLY1305_SHA256`
   * `TLS_SM4_GCM_SM3`
   * `TLS_SM4_CCM_SM3`
+* TLCP
+  * `ECC-SM2-WITH-SM4-SM3`
+  * `ECC-SM2-SM4-CBC-SM3`
+  * `ECC-SM2-SM4-GCM-SM3`
+  * `ECDHE-SM2-WITH-SM4-SM3`
+  * `ECDHE-SM2-SM4-CBC-SM3`
+  * `ECDHE-SM2-SM4-GCM-SM3`
+
+Illustration:
+`ECC-SM2-WITH-SM4-SM3` is alias of `ECC-SM2-SM4-CBC-SM3`
+`ECDHE-SM2-WITH-SM4-SM3` is alias of `ECDHE-SM2-SM4-CBC-SM3`
 
 The above cipher suites are enabled by default when the associated version of
 the protocol is enabled.  The TLS 1.3 cipher suites cannot be customized; they

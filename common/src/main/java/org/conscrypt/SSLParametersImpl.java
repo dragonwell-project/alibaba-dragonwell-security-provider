@@ -84,7 +84,7 @@ final class SSLParametersImpl implements Cloneable {
     private boolean need_client_auth = false;
     // if the peer with this parameters tuned to request client authentication
     private boolean want_client_auth = false;
-    // if the peer with this parameters allowed to cteate new SSL session
+    // if the peer with this parameters allowed to create new SSL session
     private boolean enable_session_creation = true;
     // Endpoint identification algorithm (e.g., HTTPS)
     private String endpointIdentificationAlgorithm;
@@ -110,6 +110,7 @@ final class SSLParametersImpl implements Cloneable {
      * server-side only.
      */
     boolean channelIdEnabled;
+    boolean enableTlcp;
 
     /**
      * Initializes the parameters. Naturally this constructor is used
@@ -121,10 +122,11 @@ final class SSLParametersImpl implements Cloneable {
      */
     SSLParametersImpl(KeyManager[] kms, TrustManager[] tms,
             SecureRandom sr, ClientSessionContext clientSessionContext,
-            ServerSessionContext serverSessionContext, String[] protocols)
+            ServerSessionContext serverSessionContext, String[] protocols, boolean enableTlcp)
             throws KeyManagementException {
         this.serverSessionContext = serverSessionContext;
         this.clientSessionContext = clientSessionContext;
+        this.enableTlcp = enableTlcp;
 
         // initialize key managers
         if (kms == null) {
@@ -148,8 +150,12 @@ final class SSLParametersImpl implements Cloneable {
                 protocols == null ? NativeCrypto.DEFAULT_PROTOCOLS : protocols).clone();
         boolean x509CipherSuitesNeeded = (x509KeyManager != null) || (x509TrustManager != null);
         boolean pskCipherSuitesNeeded = pskKeyManager != null;
-        enabledCipherSuites = getDefaultCipherSuites(
-                x509CipherSuitesNeeded, pskCipherSuitesNeeded);
+        if (this.enableTlcp) {
+            enabledCipherSuites = NativeCrypto.SUPPORTED_TLCP_CIPHER_SUITES;
+        } else {
+            enabledCipherSuites = getDefaultCipherSuites(
+                    x509CipherSuitesNeeded, pskCipherSuitesNeeded);
+        }
 
         // We ignore the SecureRandom passed in by the caller. The native code below
         // directly accesses /dev/urandom, which makes it irrelevant.
@@ -200,9 +206,10 @@ final class SSLParametersImpl implements Cloneable {
             defaultParameters = result = new SSLParametersImpl(null,
                                                                null,
                                                                null,
-                                                               new ClientSessionContext(),
-                                                               new ServerSessionContext(),
-                                                               null);
+                                                               new ClientSessionContext(false),
+                                                               new ServerSessionContext(false),
+                                                               null,
+                                                               false);
         }
         return (SSLParametersImpl) result.clone();
     }
@@ -251,19 +258,23 @@ final class SSLParametersImpl implements Cloneable {
             enabledCipherSuites = new String[0];
         }
 
-        ArrayList<String> tls13Ciphers = new ArrayList<String>();
+        if (enableTlcp) {
+            return SSLUtils.concat(enabledCipherSuites);
+        } else {
+            ArrayList<String> tls13Ciphers = new ArrayList<String>();
 
-        if (Arrays.asList(enabledProtocols).contains(NativeCrypto.SUPPORTED_PROTOCOL_TLSV1_3)) {
-            Set<String> enabledCiphersSet = new HashSet<String>(Arrays.asList(enabledCipherSuites));
-            for (String c : NativeCrypto.SUPPORTED_TLS_1_3_CIPHER_SUITES) {
-                if (!enabledCiphersSet.contains(c)) {
-                    tls13Ciphers.add(c);
+            if (Arrays.asList(enabledProtocols).contains(NativeCrypto.SUPPORTED_PROTOCOL_TLSV1_3)) {
+                Set<String> enabledCiphersSet = new HashSet<String>(Arrays.asList(enabledCipherSuites));
+                for (String c : NativeCrypto.SUPPORTED_TLS_1_3_CIPHER_SUITES) {
+                    if (!enabledCiphersSet.contains(c)) {
+                        tls13Ciphers.add(c);
+                    }
                 }
             }
-        }
 
-        return SSLUtils.concat(tls13Ciphers.toArray(EMPTY_STRING_ARRAY),
-                               enabledCipherSuites);
+            return SSLUtils.concat(tls13Ciphers.toArray(EMPTY_STRING_ARRAY),
+                    enabledCipherSuites);
+        }
     }
 
     /**

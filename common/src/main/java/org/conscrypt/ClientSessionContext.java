@@ -42,7 +42,11 @@ public final class ClientSessionContext extends AbstractSessionContext {
     private SSLClientSessionCache persistentCache;
 
     ClientSessionContext() {
-        super(10);
+        this(false);
+    }
+
+    ClientSessionContext(boolean enableTlcp) {
+        super(10, enableTlcp, true);
     }
 
     /**
@@ -80,6 +84,9 @@ public final class ClientSessionContext extends AbstractSessionContext {
         }
 
         String cipherSuite = session.getCipherSuite();
+        if (sslParameters.enableTlcp) {
+            cipherSuite = NativeCrypto.cipherSuiteToJava(cipherSuite);
+        }
         boolean cipherSuiteFound = false;
         for (String enabledCipherSuite : sslParameters.getEnabledCipherSuites()) {
             if (cipherSuite.equals(enabledCipherSuite)) {
