@@ -1,4 +1,4 @@
-package net.tongsuo;
+package com.alibaba.dragonwell.security;
 
 import org.conscrypt.*;
 import org.junit.BeforeClass;
@@ -7,7 +7,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-    TongsuoProviderEndToEndTest.class,
+    DragonwellSecurityProviderEndToEndTest.class,
 })
 
 public class TongsuoOpenJdkSuite {

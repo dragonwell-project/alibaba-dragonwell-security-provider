@@ -4,24 +4,24 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.Signature;
-import net.tongsuo.TongsuoProvider;
+import com.alibaba.dragonwell.security.DragonwellSecurityProvider;
 
 public class SM2SignatureExample {
     static {
         // install tongsuo provider
-        Security.addProvider(new TongsuoProvider());
+        Security.addProvider(new DragonwellSecurityProvider());
     }
 
     public static void main(String[] args) throws Exception {
         byte[] mess = "example".getBytes();
 
         // SM3withSM2 requires SM2 key
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("SM2", "Tongsuo_Security_Provider");
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("SM2", "Dragonwell_Security_Provider");
         KeyPair kp = kpg.generateKeyPair();
         PrivateKey privateKey = kp.getPrivate();
         PublicKey publicKey = kp.getPublic();
 
-        Signature sig = Signature.getInstance("SM3withSM2", "Tongsuo_Security_Provider");
+        Signature sig = Signature.getInstance("SM3withSM2", "Dragonwell_Security_Provider");
         // sign using private key
         sig.initSign(privateKey);
         // feed in mess(s)

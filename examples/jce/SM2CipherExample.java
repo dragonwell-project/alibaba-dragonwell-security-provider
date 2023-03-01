@@ -8,30 +8,30 @@ import javax.crypto.Cipher;
 import org.conscrypt.SM2PrivateKey;
 import org.conscrypt.SM2PrivateKeySpec;
 import java.util.Base64;
-import net.tongsuo.TongsuoProvider;
+import com.alibaba.dragonwell.security.DragonwellSecurityProvider;
 
 public class SM2CipherExample {
     static {
         // install tongsuo provider
-        Security.addProvider(new TongsuoProvider());
+        Security.addProvider(new DragonwellSecurityProvider());
     }
 
     public static void main(String[] args) throws Exception {
         byte[] mess = "example".getBytes();
 
         // SM2 cipher requires SM2 key
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("SM2", "Tongsuo_Security_Provider");
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("SM2", "Dragonwell_Security_Provider");
         KeyPair kp = kpg.generateKeyPair();
         PrivateKey privateKey = kp.getPrivate();
         PublicKey publicKey = kp.getPublic();
 
-        Cipher cipher = Cipher.getInstance("SM2", "Tongsuo_Security_Provider");
+        Cipher cipher = Cipher.getInstance("SM2", "Dragonwell_Security_Provider");
         // encrypt with public key
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
         cipher.update(mess);
         byte[] ciphertext = cipher.doFinal();
 
-        KeyFactory kf = KeyFactory.getInstance("SM2", "Tongsuo_Security_Provider");
+        KeyFactory kf = KeyFactory.getInstance("SM2", "Dragonwell_Security_Provider");
         SM2PrivateKeySpec privateKeySpec = new SM2PrivateKeySpec(((SM2PrivateKey) privateKey).getS());
         // decrypt with private key
         // keyfactory can convert KeySpec to Key
