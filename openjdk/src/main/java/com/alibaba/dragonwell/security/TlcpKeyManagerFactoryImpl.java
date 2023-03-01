@@ -1,4 +1,4 @@
-package net.tongsuo;
+package com.alibaba.dragonwell.security;
 
 import org.conscrypt.io.IoUtils;
 
@@ -7,12 +7,11 @@ import javax.net.ssl.KeyManagerFactorySpi;
 import javax.net.ssl.ManagerFactoryParameters;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-public class TlcpKeyManagerFactoryImpl extends KeyManagerFactorySpi {
+public final class TlcpKeyManagerFactoryImpl extends KeyManagerFactorySpi {
     private static final char[] EMPTY_KEY = new char[0];
 
     // source of key material

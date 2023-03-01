@@ -49,8 +49,8 @@ subprojects {
     apply plugin: "jacoco"
     apply plugin: "net.ltgt.errorprone"
 
-    group = "net.tongsuo"
-    description = 'Tongsuo Provider is an alternate Java Security Provider that uses Tongsuo'
+    group = "com.alibaba.dragonwell.security"
+    description = 'Dragonwell Security Provider is an alternate Java Security Provider that uses Tongsuo'
     version = "1.0.0"
 
     ext {
