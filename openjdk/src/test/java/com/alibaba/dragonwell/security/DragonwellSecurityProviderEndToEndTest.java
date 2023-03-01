@@ -7,7 +7,7 @@
  * https://github.com/Tongsuo-Project/Tongsuo/blob/master/LICENSE.txt
  */
 
-package net.tongsuo;
+package com.alibaba.dragonwell.security;
 
 import javax.net.ssl.*;
 import java.io.*;
@@ -15,19 +15,15 @@ import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
 
-import net.tongsuo.TongsuoX509Certificate;
-import net.tongsuo.TongsuoProvider;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import org.junit.Test;
 
-import static org.conscrypt.TestUtils.openTestFile;
 import static org.conscrypt.TestUtils.readSM2PrivateKeyPemFile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TongsuoProviderEndToEndTest {
+public class DragonwellSecurityProviderEndToEndTest {
     private static final char[] EMPTY_PASSWORD = new char[0];
     private static final String SSL_13_TYPE = "TLSv1.3";
     private static final String SERVER_CA = "cert/sm2-root.crt";
@@ -44,7 +40,8 @@ public class TongsuoProviderEndToEndTest {
         ks.load(null, null);
 
         // Build a service CA
-        X509Certificate ca = TongsuoX509Certificate.fromX509PemInputStream(openTestFile(SERVER_CA));
+        X509Certificate ca = DragonwellX509Certificate
+                .fromX509PemInputStream(DragonwellSecurityProviderEndToEndTest.class.getResourceAsStream(SERVER_CA));
         PrivateKey privateKey = readSM2PrivateKeyPemFile(PRIVATE_KEY);
 
         ks.setKeyEntry("default", privateKey, EMPTY_PASSWORD, new X509Certificate[]{ca});
@@ -58,7 +55,7 @@ public class TongsuoProviderEndToEndTest {
         kmf.init(ks, EMPTY_PASSWORD);
         KeyManager[] kms = kmf.getKeyManagers();
 
-        SSLContext sslContext = SSLContext.getInstance(SSL_13_TYPE, new TongsuoProvider());
+        SSLContext sslContext = SSLContext.getInstance(SSL_13_TYPE, new DragonwellSecurityProvider());
         sslContext.init(kms, tms, new SecureRandom());
         return sslContext;
     }
@@ -75,15 +72,15 @@ public class TongsuoProviderEndToEndTest {
         KeyStore ks = KeyStore.getInstance("PKCS12",new BouncyCastleProvider());
         ks.load(null, null);
 
-        X509Certificate ca = TongsuoX509Certificate
-                .fromX509PemInputStream(openTestFile(SERVER_CA));
+        X509Certificate ca = DragonwellX509Certificate
+                .fromX509PemInputStream(DragonwellSecurityProviderEndToEndTest.class.getResourceAsStream(SERVER_CA));
         ks.setCertificateEntry("CA", ca);
 
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init(ks);
         TrustManager[] tms = tmf.getTrustManagers();
 
-        SSLContext sslContext = SSLContext.getInstance(SSL_13_TYPE, new TongsuoProvider());
+        SSLContext sslContext = SSLContext.getInstance(SSL_13_TYPE, new DragonwellSecurityProvider());
         sslContext.init(null, tms, new SecureRandom());
         return sslContext;
     }
@@ -96,7 +93,7 @@ public class TongsuoProviderEndToEndTest {
     }
 
     @Test
-    public void testTongsuoProvider() throws Exception {
+    public void testDragonwellSecurityProvider() throws Exception {
         CountDownLatch downLatch = new CountDownLatch(1);
 
         // Start server asynchronously.

@@ -1,4 +1,4 @@
-Building Tongsuo-Java-SDK
+Building Alibaba Dragonwell Security Provider
 ==================
 
 Before you begin, you'll first need to properly configure the [Prerequisites](#Prerequisites) as
@@ -18,7 +18,7 @@ $ ./gradlew publishToMavenLocal -PtongsuoHome=/opt/tongsuo -PjdkHome=/path/to/jd
 
 Prerequisites
 -------------
-Tongsuo-Java-SDK requires that you have __Java__, __Tongsuo__ configured as described
+Alibaba Dragonwell Security Provider requires that you have __Java__, __Tongsuo__ configured as described
 below.
 
 #### Java
