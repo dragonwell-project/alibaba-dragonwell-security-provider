@@ -4,7 +4,6 @@ import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.SocketAddress;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
@@ -14,8 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-import net.tongsuo.TlcpKeyManagerImpl;
-import net.tongsuo.TongsuoProvider;
+import com.alibaba.dragonwell.security.TlcpKeyManagerImpl;
+import com.alibaba.dragonwell.security.DragonwellSecurityProvider;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -125,7 +124,7 @@ public class TlcpDoubleCertTest {
         ks.setCertificateEntry("CA", caCert);
         ks.setCertificateEntry("SUB_CA", subCaCert);
 
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance("TlcpKeyManagerFactory", new TongsuoProvider());
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("TlcpKeyManagerFactory", new DragonwellSecurityProvider());
         kmf.init(ks, EMPTY_PASSWORD);
         KeyManager clientKey = (kmf.getKeyManagers())[0];
         if (clientKey instanceof TlcpKeyManagerImpl) {
@@ -190,7 +189,7 @@ public class TlcpDoubleCertTest {
         ks.setCertificateEntry("CA", caCert);
         ks.setCertificateEntry("SUB_CA", subCaCert);
 
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance("TlcpKeyManagerFactory", new TongsuoProvider());
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("TlcpKeyManagerFactory", new DragonwellSecurityProvider());
         kmf.init(ks, EMPTY_PASSWORD);
         KeyManager serverKey = (kmf.getKeyManagers())[0];
         if (serverKey instanceof TlcpKeyManagerImpl) {
@@ -238,7 +237,7 @@ public class TlcpDoubleCertTest {
     }
 
     private SSLServerSocket buildSSLServerSocket(String[] ciphers) throws Exception {
-        SSLContext sslContext = SSLContext.getInstance(TLCP, new TongsuoProvider());
+        SSLContext sslContext = SSLContext.getInstance(TLCP, new DragonwellSecurityProvider());
         assertTrue(sslContext.getProtocol().equals("TLCP"));
         sslContext.init(serverKeyManager, serverTrustManager, new SecureRandom());
         SSLServerSocketFactory serverFactory = sslContext.getServerSocketFactory();
@@ -252,7 +251,7 @@ public class TlcpDoubleCertTest {
     }
 
     private SSLSocket buildSSLClientSocket(String[] ciphers, boolean setEnableCipher) throws Exception {
-        SSLContext sslContext = SSLContext.getInstance(TLCP, new TongsuoProvider());
+        SSLContext sslContext = SSLContext.getInstance(TLCP, new DragonwellSecurityProvider());
         sslContext.init(clientKeyManager, clientTrustManager, new SecureRandom());
         SSLSocketFactory sslCntFactory = sslContext.getSocketFactory();
         SSLSocket sslSocket = (SSLSocket) sslCntFactory.createSocket("localhost", port);
@@ -306,7 +305,7 @@ public class TlcpDoubleCertTest {
     }
 
     private void startSessionResumptionServer() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance(TLCP, new TongsuoProvider());
+        SSLContext sslContext = SSLContext.getInstance(TLCP, new DragonwellSecurityProvider());
         assertTrue(sslContext.getProtocol().equals("TLCP"));
         sslContext.init(serverKeyManager, serverTrustManager, new SecureRandom());
         SSLServerSocketFactory serverFactory = sslContext.getServerSocketFactory();
@@ -339,7 +338,7 @@ public class TlcpDoubleCertTest {
     }
 
     private void startSessionResumptionClient() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance(TLCP, new TongsuoProvider());
+        SSLContext sslContext = SSLContext.getInstance(TLCP, new DragonwellSecurityProvider());
         sslContext.init(clientKeyManager, clientTrustManager, new SecureRandom());
         SSLSocketFactory sslCntFactory = sslContext.getSocketFactory();
         SSLSocket sslSocket = (SSLSocket) sslCntFactory.createSocket("localhost", port);

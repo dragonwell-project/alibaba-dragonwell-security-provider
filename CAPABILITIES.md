@@ -1,9 +1,9 @@
-Tongsuo-Java-SDK's Capabilities
+Alibaba Dragonwell Security Provider's Capabilities
 ========================================
 
-Tongsuo-Java-SDK is relatively selective in choosing the set of primitives to provide, focusing
+Alibaba Dragonwell Security Provider is relatively selective in choosing the set of primitives to provide, focusing
 on the most important and widely-used algorithms.  Following is a list of JCA algorithm names
-and other identifiers that are supported by Tongsuo-Java-SDK.
+and other identifiers that are supported by Alibaba Dragonwell Security Provider.
 
 ## TLS
 
@@ -14,8 +14,9 @@ and other identifiers that are supported by Tongsuo-Java-SDK.
 * `TLSv1.1`
 * `TLSv1.2`
 * `TLSv1.3`
+* `TLCP`
 
-Tongsuo-Java-SDK supports TLS v1.0-1.3.  For backwards compatibility it will accept
+Alibaba Dragonwell Security Provider supports TLS v1.0-1.3.  For backwards compatibility it will accept
 `SSLv3` in calls to methods like
 [`setEnabledProtocols()`](https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#setEnabledProtocols-java.lang.String:A-)
 but will ignore it.
@@ -29,8 +30,9 @@ but will ignore it.
 * `TLSv1.1`
 * `TLSv1.2`
 * `TLSv1.3`
+* `TLCP`
 
-Tongsuo-Java-SDK provides the above set of SSLContext algorithm names for JSSE
+Alibaba Dragonwell Security Provider provides the above set of SSLContext algorithm names for JSSE
 purposes, including the special value `Default`, which is used to determine the
 value of
 [`SSLContext.getDefault()`](https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLContext.html#getDefault--).
@@ -70,6 +72,7 @@ v1.0-1.3 are all enabled; the others return a context with TLS v1.0-1.2 enabled.
   * `ECDHE-SM2-SM4-GCM-SM3`
 
 Illustration:
+
 `ECC-SM2-WITH-SM4-SM3` is alias of `ECC-SM2-SM4-CBC-SM3`
 `ECDHE-SM2-WITH-SM4-SM3` is alias of `ECDHE-SM2-SM4-CBC-SM3`
 
@@ -150,7 +153,7 @@ Triple DES with either two or three intermediate keys.
 * `RSA/ECB/OAEPWithSHA-512AndMGF1Padding`
 * `RSA/ECB/PKCS1Padding`
 
-Tongsuo-Java-SDK's OAEP ciphers (eg, `RSA/ECB/OAEPWithSHA-256AndMGF1Padding`) use the named digest
+Alibaba Dragonwell Security Provider's OAEP ciphers (eg, `RSA/ECB/OAEPWithSHA-256AndMGF1Padding`) use the named digest
 for both the main digest and the MGF1 digest.  This differs from the behavior of some other
 providers, including the ones bundled with OpenJDK, which always use SHA-1 for the MGF1 digest.
 For maximum compatibility, you should use `RSA/ECB/OAEPPadding` and initialize it with an
@@ -165,7 +168,7 @@ For maximum compatibility, you should use `RSA/ECB/OAEPPadding` and initialize i
 * `OAEP`
 * `PSS`
 
-Tongsuo-Java-SDK's EC AlgorithmParameters implementation only supports named curves.
+Alibaba Dragonwell Security Provider's EC AlgorithmParameters implementation only supports named curves.
 
 ### CertificateFactory
 * `X509`
@@ -237,13 +240,13 @@ Tongsuo-Java-SDK's EC AlgorithmParameters implementation only supports named cur
 
 ### Elliptic Curves
 
-Tongsuo-Java-SDK supports the following curves in EC crypto operations (such as ECDSA signatures) and TLS:
+Alibaba Dragonwell Security Provider supports the following curves in EC crypto operations (such as ECDSA signatures) and TLS:
 
-| Curve | EC Crypto |  TLS  |
-| ----- | :-------: | :---: |
-| secp224r1 | X |   |
-| prime256v1<br/>(aka secp256r1) | X | X |
-| secp384r1 | X | X |
-| secp521r1 | X |   |
-| x25519 |   | X |
-| SM2 |  |  |
+| Curve                          | EC Crypto | TLS |
+|--------------------------------|:---------:|:---:|
+| secp224r1                      |     X     |     |
+| prime256v1<br/>(aka secp256r1) |     X     |  X  |
+| secp384r1                      |     X     |  X  |
+| secp521r1                      |     X     |     |
+| x25519                         |           |  X  |
+| SM2                            |           |     |
