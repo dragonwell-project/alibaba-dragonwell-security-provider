@@ -137,6 +137,7 @@ public class OpenSSLProvider extends Provider {
         put("Alg.Alias.AlgorithmParameters.2.16.840.1.101.3.4.1.6", "GCM");
         put("Alg.Alias.AlgorithmParameters.2.16.840.1.101.3.4.1.26", "GCM");
         put("Alg.Alias.AlgorithmParameters.2.16.840.1.101.3.4.1.46", "GCM");
+        put("AlgorithmParameters.CCM", PREFIX + "CCMParameters");
         put("AlgorithmParameters.OAEP", PREFIX + "OAEPParameters");
         put("AlgorithmParameters.PSS", PREFIX + "PSSParameters");
         put("AlgorithmParameters.EC", PREFIX + "ECParameters");
@@ -502,27 +503,30 @@ public class OpenSSLProvider extends Provider {
         put("Alg.Alias.Cipher.1.2.840.113549.3.4", "ARC4");
         put("Alg.Alias.Cipher.OID.1.2.840.113549.3.4", "ARC4");
 
-        putSymmetricCipherImplClass("AES/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM");
-        put("Alg.Alias.Cipher.GCM", "AES/GCM/NoPadding");
-        put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.6", "AES/GCM/NoPadding");
-        put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.26", "AES/GCM/NoPadding");
-        put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.46", "AES/GCM/NoPadding");
-        putSymmetricCipherImplClass(
-                "AES_128/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM$AES_128");
-        putSymmetricCipherImplClass(
-                "AES_256/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM$AES_256");
+        // putSymmetricCipherImplClass("AES/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM");
+        // put("Alg.Alias.Cipher.GCM", "AES/GCM/NoPadding");
+        // put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.6", "AES/GCM/NoPadding");
+        // put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.26", "AES/GCM/NoPadding");
+        // put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.46", "AES/GCM/NoPadding");
+        // putSymmetricCipherImplClass(
+        //         "AES_128/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM$AES_128");
+        // putSymmetricCipherImplClass(
+        //         "AES_256/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM$AES_256");
 
-        putSymmetricCipherImplClass("AES/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV");
-        putSymmetricCipherImplClass(
-            "AES_128/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV$AES_128");
-        putSymmetricCipherImplClass(
-            "AES_256/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV$AES_256");
+        // putSymmetricCipherImplClass("AES/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV");
+        // putSymmetricCipherImplClass(
+        //     "AES_128/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV$AES_128");
+        // putSymmetricCipherImplClass(
+        //     "AES_256/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV$AES_256");
 
-        putSymmetricCipherImplClass("ChaCha20",
-                "OpenSSLCipherChaCha20");
-        putSymmetricCipherImplClass("ChaCha20/Poly1305/NoPadding",
-                "OpenSSLAeadCipherChaCha20");
-        put("Alg.Alias.Cipher.ChaCha20-Poly1305", "ChaCha20/Poly1305/NoPadding");
+        putSymmetricCipherImplClass("SM4/GCM/NoPadding", "OpenSSLAeadCipherSM4$GCM");
+        putSymmetricCipherImplClass("SM4/CCM/NoPadding", "OpenSSLAeadCipherSM4$CCM");
+
+        // putSymmetricCipherImplClass("ChaCha20",
+        //         "OpenSSLCipherChaCha20");
+        // putSymmetricCipherImplClass("ChaCha20/Poly1305/NoPadding",
+        //         "OpenSSLAeadCipherChaCha20");
+        // put("Alg.Alias.Cipher.ChaCha20-Poly1305", "ChaCha20/Poly1305/NoPadding");
 
         /* === Mac === */
 
