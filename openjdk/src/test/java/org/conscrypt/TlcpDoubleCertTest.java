@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -94,6 +95,8 @@ public class TlcpDoubleCertTest {
         CIPHER_SUIT_MAP.put("ECDHE-SM2-SM4-CBC-SM3", "ECDHE-SM2-SM4-CBC-SM3");
         CIPHER_SUIT_MAP.put("ECDHE-SM2-SM4-GCM-SM3", "ECDHE-SM2-SM4-GCM-SM3");
 
+        Security.addProvider(new DragonwellSecurityProvider());
+
         buildCaCert();
         buildClientKeyStore();
         buildServerKeyStore();
@@ -139,38 +142,9 @@ public class TlcpDoubleCertTest {
             assertTrue(false);
         }
 
-//      TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
-//      tmf.init(ks);
-//      clientTrustManager = tmf.getTrustManagers();
-
-        // TODO: check certificate validity with SM2WithSM3.
-        // There is no support for SM2WithSM3,
-        TrustManager[] tms = new TrustManager[]{new X509TrustManager() {
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[]{subCaCert, caCert};
-            }
-
-            @Override
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
-                for (X509Certificate cert : certs) {
-                    try {
-                        cert.checkValidity();
-                        cert.verify(subCaCert.getPublicKey());
-                        subCaCert.checkValidity();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new CertificateException(e);
-                    }
-                }
-            }
-
-        }};
-        clientTrustManager = tms;
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(ks);
+        clientTrustManager = tmf.getTrustManagers();
         assertEquals(clientTrustManager.length, 1);
     }
 
@@ -204,38 +178,9 @@ public class TlcpDoubleCertTest {
             assertTrue(false);
         }
 
-//      TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-//      tmf.init(ks);
-//      serverTrustManager = tmf.getTrustManagers();
-
-        // TODO: check certificate validity with SM2WithSM3.
-        // There is no support for SM2WithSM3,
-        TrustManager[] tms = new TrustManager[]{new X509TrustManager() {
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[]{subCaCert, caCert};
-            }
-
-            @Override
-            public void checkClientTrusted(X509Certificate[] certs, String authType) throws CertificateException {
-                for (X509Certificate cert : certs) {
-                    try {
-                        cert.checkValidity();
-                        cert.verify(subCaCert.getPublicKey());
-                        subCaCert.checkValidity();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new CertificateException(e);
-                    }
-                }
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {
-            }
-
-        }};
-        serverTrustManager = tms;
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(ks);
+        serverTrustManager = tmf.getTrustManagers();
         assertEquals(serverTrustManager.length, 1);
     }
 

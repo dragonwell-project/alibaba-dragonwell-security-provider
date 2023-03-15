@@ -360,6 +360,7 @@ public class OpenSSLProvider extends Provider {
         put("Alg.Alias.Signature.2.16.840.1.101.3.4.2.3with1.2.840.10045.2.1", "SHA512withECDSA");
 
         putSignatureImplClass("SM3withSM2", "OpenSSLSignature$SM3withSM2");
+        put("Alg.Alias.Signature.1.2.156.10197.1.501", "SM3withSM2");
 
         putSignatureImplClass("SHA1withRSA/PSS", "OpenSSLSignature$SHA1RSAPSS");
         put("Alg.Alias.Signature.SHA1withRSAandMGF1", "SHA1withRSA/PSS");
