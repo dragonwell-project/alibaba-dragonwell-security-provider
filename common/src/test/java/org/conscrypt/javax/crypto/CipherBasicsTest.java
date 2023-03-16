@@ -77,6 +77,8 @@ public final class CipherBasicsTest {
         AEAD_CIPHER_TO_TEST_DATA.put("AES/GCM/NoPadding", "crypto/aes-gcm.csv");
         AEAD_CIPHER_TO_TEST_DATA.put("AES/GCM-SIV/NoPadding", "crypto/aes-gcm-siv.csv");
         AEAD_CIPHER_TO_TEST_DATA.put("ChaCha20/Poly1305/NoPadding", "crypto/chacha20-poly1305.csv");
+        AEAD_CIPHER_TO_TEST_DATA.put("SM4/GCM/NoPadding", "crypto/sm4-gcm.csv");
+        AEAD_CIPHER_TO_TEST_DATA.put("SM4/CCM/NoPadding", "crypto/sm4-ccm.csv");
     }
 
     private static final int KEY_INDEX = 0;
