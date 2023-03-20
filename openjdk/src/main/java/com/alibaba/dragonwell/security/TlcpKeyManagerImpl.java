@@ -8,7 +8,7 @@ import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
-public final class TlcpKeyManagerImpl extends X509ExtendedKeyManager {
+public final class TlcpKeyManagerImpl extends X509ExtendedKeyManager implements DragonwellTlcpCertIndicate {
     private static final String[] STRING0 = new String[0];
 
     /*
