@@ -8,6 +8,7 @@ import java.net.SocketAddress;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -29,6 +30,9 @@ import static org.junit.Assert.assertNotNull;
 
 public class TlcpDoubleCertTest {
     private final String TLCP = "TLCP";
+    private final String HTTP_1_1 = "http/1.1";
+    private final String HTTP_2 = "h2";
+    private final String SNI_HOST_NAME = "example.com";
     private final Map<String, Object> CIPHER_SUIT_MAP = new HashMap();
 
     private final String SERVER_ENC_ALIAS = "SERVER_ENC_ENTRY";
@@ -92,6 +96,8 @@ public class TlcpDoubleCertTest {
         CIPHER_SUIT_MAP.put("ECDHE-SM2-SM4-CBC-SM3", "ECDHE-SM2-SM4-CBC-SM3");
         CIPHER_SUIT_MAP.put("ECDHE-SM2-SM4-GCM-SM3", "ECDHE-SM2-SM4-GCM-SM3");
 
+        Security.addProvider(new TongsuoProvider());
+
         buildCaCert();
         buildClientKeyStore();
         buildServerKeyStore();
@@ -137,38 +143,9 @@ public class TlcpDoubleCertTest {
             assertTrue(false);
         }
 
-//      TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
-//      tmf.init(ks);
-//      clientTrustManager = tmf.getTrustManagers();
-
-        // TODO: check certificate validity with SM2WithSM3.
-        // There is no support for SM2WithSM3,
-        TrustManager[] tms = new TrustManager[]{new X509TrustManager() {
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[]{subCaCert, caCert};
-            }
-
-            @Override
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
-                for (X509Certificate cert : certs) {
-                    try {
-                        cert.checkValidity();
-                        cert.verify(subCaCert.getPublicKey());
-                        subCaCert.checkValidity();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new CertificateException(e);
-                    }
-                }
-            }
-
-        }};
-        clientTrustManager = tms;
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(ks);
+        clientTrustManager = tmf.getTrustManagers();
         assertEquals(clientTrustManager.length, 1);
     }
 
@@ -202,38 +179,9 @@ public class TlcpDoubleCertTest {
             assertTrue(false);
         }
 
-//      TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-//      tmf.init(ks);
-//      serverTrustManager = tmf.getTrustManagers();
-
-        // TODO: check certificate validity with SM2WithSM3.
-        // There is no support for SM2WithSM3,
-        TrustManager[] tms = new TrustManager[]{new X509TrustManager() {
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[]{subCaCert, caCert};
-            }
-
-            @Override
-            public void checkClientTrusted(X509Certificate[] certs, String authType) throws CertificateException {
-                for (X509Certificate cert : certs) {
-                    try {
-                        cert.checkValidity();
-                        cert.verify(subCaCert.getPublicKey());
-                        subCaCert.checkValidity();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new CertificateException(e);
-                    }
-                }
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {
-            }
-
-        }};
-        serverTrustManager = tms;
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(ks);
+        serverTrustManager = tmf.getTrustManagers();
         assertEquals(serverTrustManager.length, 1);
     }
 
@@ -389,5 +337,63 @@ public class TlcpDoubleCertTest {
         downLatch = new CountDownLatch(1);
         startSessionResumptionServer();
         startSessionResumptionClient();
+    }
+
+    @Test
+    public void testTlcpCertSNIAndAlpn() throws Exception {
+        downLatch = new CountDownLatch(1);
+        SSLContext sslContextServer = SSLContext.getInstance(TLCP, new TongsuoProvider());
+        assertTrue(sslContextServer.getProtocol().equals("TLCP"));
+        sslContextServer.init(serverKeyManager, serverTrustManager, new SecureRandom());
+        SSLServerSocketFactory serverFactory = sslContextServer.getServerSocketFactory();
+        SSLServerSocket svrSocket = (SSLServerSocket) serverFactory.createServerSocket(0);
+        port = svrSocket.getLocalPort();
+
+        Thread serverThread = new Thread(() -> {
+            try {
+                downLatch.countDown();
+                for (int i = 0x0; i < 1; i++) {
+                    SSLSocket sslSocket = (SSLSocket) svrSocket.accept();
+                    Conscrypt.setApplicationProtocols(sslSocket, new String[] {HTTP_2});
+                    BufferedReader ioReader = new BufferedReader(new InputStreamReader(sslSocket.getInputStream()));
+                    PrintWriter ioWriter = new PrintWriter(sslSocket.getOutputStream());
+                    SSLSession session = (SSLSession) sslSocket.getClass().getSuperclass().getDeclaredMethod("getActiveSession").invoke(sslSocket);
+                    String hostname = (String) session.getClass().getDeclaredMethod("getRequestedServerName").invoke(session);
+                    assertEquals(hostname, SNI_HOST_NAME);
+                    String tmpMsg = ioReader.readLine();
+                    if (tmpMsg != null) {
+                        assertEquals(tmpMsg, HELLO_REQUEST);
+                        ioWriter.println(HELLO_RESPONSE);
+                        ioWriter.flush();
+                        Thread.sleep(1_000);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                assertTrue(false);
+            }
+        });
+        serverThread.setDaemon(true);
+        serverThread.start();
+
+        SSLContext sslContextClient = SSLContext.getInstance(TLCP, new TongsuoProvider());
+        sslContextClient.init(clientKeyManager, clientTrustManager, new SecureRandom());
+        SSLSocketFactory sslCntFactory = sslContextClient.getSocketFactory();
+        SSLSocket sslSocket = (SSLSocket) sslCntFactory.createSocket("localhost", port);
+        Conscrypt.setHostname(sslSocket, SNI_HOST_NAME);
+        Conscrypt.setApplicationProtocols(sslSocket, new String[] {HTTP_1_1, HTTP_2});
+
+        downLatch.await();
+        // Wait for server startup.
+        Thread.sleep(2_000);
+        BufferedReader ioReader = new BufferedReader(new InputStreamReader(
+                sslSocket.getInputStream()));
+        PrintWriter ioWriter = new PrintWriter(sslSocket.getOutputStream());
+        ioWriter.println(HELLO_REQUEST);
+        ioWriter.flush();
+        assertEquals(ioReader.readLine(), HELLO_RESPONSE);
+        assertEquals(Conscrypt.getApplicationProtocol(sslSocket), HTTP_2);
+        Thread.sleep(2_000);
+        sslSocket.close();
     }
 }

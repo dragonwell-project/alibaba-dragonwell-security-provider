@@ -84,5 +84,4 @@ dependencies {
 How to Build
 ------------
 
-If you are making changes to Tongsuo, see the [building
-instructions](BUILDING.md).
+If you are making changes to Tongsuo Security Provider, see the [building instructions](BUILDING.md).
