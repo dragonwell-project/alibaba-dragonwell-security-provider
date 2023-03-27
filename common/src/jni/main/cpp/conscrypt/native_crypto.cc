@@ -2992,6 +2992,8 @@ static jlong NativeCrypto_EVP_get_cipherbyname(JNIEnv* env, jclass, jstring algo
         cipher = EVP_aes_128_ctr();
     } else if (strcasecmp(alg, "aes-128-gcm") == 0) {
         cipher = EVP_aes_128_gcm();
+    } else if (strcasecmp(alg, "aes-128-ccm") == 0) {
+        cipher = EVP_aes_128_ccm();
     } else if (strcasecmp(alg, "aes-192-ecb") == 0) {
         cipher = EVP_aes_192_ecb();
     } else if (strcasecmp(alg, "aes-192-cbc") == 0) {
@@ -3000,6 +3002,8 @@ static jlong NativeCrypto_EVP_get_cipherbyname(JNIEnv* env, jclass, jstring algo
         cipher = EVP_aes_192_ctr();
     } else if (strcasecmp(alg, "aes-192-gcm") == 0) {
         cipher = EVP_aes_192_gcm();
+    } else if (strcasecmp(alg, "aes-192-ccm") == 0) {
+        cipher = EVP_aes_192_ccm();
     } else if (strcasecmp(alg, "aes-256-ecb") == 0) {
         cipher = EVP_aes_256_ecb();
     } else if (strcasecmp(alg, "aes-256-cbc") == 0) {
@@ -3008,6 +3012,8 @@ static jlong NativeCrypto_EVP_get_cipherbyname(JNIEnv* env, jclass, jstring algo
         cipher = EVP_aes_256_ctr();
     } else if (strcasecmp(alg, "aes-256-gcm") == 0) {
         cipher = EVP_aes_256_gcm();
+    } else if (strcasecmp(alg, "aes-256-ccm") == 0) {
+        cipher = EVP_aes_256_ccm();
     } else if (strcasecmp(alg, "sm4-cbc") == 0) {
         cipher = EVP_sm4_cbc();
     } else if (strcasecmp(alg, "sm4-ctr") == 0) {
