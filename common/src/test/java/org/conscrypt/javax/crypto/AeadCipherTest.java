@@ -30,9 +30,10 @@ public class AeadCipherTest {
   @Parameterized.Parameters(name = "{0}")
   public static Iterable<String> ciphers() {
     return Arrays.asList(
-    //   "AES/GCM/NoPadding",
-    //   "AES/GCM-SIV/NoPadding",
-    //   "ChaCha20/Poly1305/NoPadding",
+      "AES/GCM/NoPadding",
+      "AES/CCM/NoPadding",
+      // "AES/GCM-SIV/NoPadding",
+      // "ChaCha20/Poly1305/NoPadding",
       "SM4/GCM/NoPadding",
       "SM4/CCM/NoPadding");
   }
@@ -67,6 +68,10 @@ public class AeadCipherTest {
       byte[] nonce = new byte[12];
       nonce[0] = counter++;
       return new GCMParameterSpec(128, nonce);
+    } else if (cipher.startsWith("AES/CCM")) {
+      byte[] nonce = new byte[12];
+      nonce[0] = counter++;
+      return new CCMParameterSpec(12, nonce);
     } else if (cipher.startsWith("SM4/GCM")) {
       byte[] nonce = new byte[12];
       nonce[0] = counter++;

@@ -308,6 +308,11 @@ public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
         return engine.getParameters();
     }
 
+    protected AlgorithmParameterSpec getParameterSpec(AlgorithmParameters params)
+            throws InvalidAlgorithmParameterException {
+        return engine.getParameterSpec(params);
+    }
+
     abstract String getCipherName(int keyLength, Mode mode);
 
     static abstract class AeadEngine {
@@ -322,6 +327,9 @@ public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
         abstract void checkSupportedMode(Mode mode) throws NoSuchAlgorithmException;
 
         abstract protected AlgorithmParameters getParameters();
+
+        abstract protected AlgorithmParameterSpec getParameterSpec(AlgorithmParameters params)
+                throws InvalidAlgorithmParameterException;
     }
 
     class GCMEngine extends AeadEngine {
@@ -389,6 +397,19 @@ public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
             }
             return null;
         }
+
+        protected AlgorithmParameterSpec getParameterSpec(AlgorithmParameters params)
+                throws InvalidAlgorithmParameterException {
+            if (params != null) {
+                try {
+                    return params.getParameterSpec(GCMParameterSpec.class);
+                } catch (InvalidParameterSpecException e) {
+                    throw new InvalidAlgorithmParameterException(
+                            "Params must be convertible to GCMParameterSpec", e);
+                }
+            }
+            return null;
+        }
     }
 
     class CCMEngine extends AeadEngine {
@@ -451,6 +472,19 @@ public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
                     return params;
                 } catch (NoSuchAlgorithmException | InvalidParameterSpecException e) {
                     return null;
+                }
+            }
+            return null;
+        }
+
+        protected AlgorithmParameterSpec getParameterSpec(AlgorithmParameters params)
+                throws InvalidAlgorithmParameterException {
+            if (params != null) {
+                try {
+                    return params.getParameterSpec(CCMParameterSpec.class);
+                } catch (InvalidParameterSpecException e) {
+                    throw new InvalidAlgorithmParameterException(
+                            "Params must be convertible to CCMParameterSpec", e);
                 }
             }
             return null;
