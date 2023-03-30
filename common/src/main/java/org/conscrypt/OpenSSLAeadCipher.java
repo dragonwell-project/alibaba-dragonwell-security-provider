@@ -26,6 +26,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
 
 @Internal
 public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
@@ -91,6 +92,9 @@ public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
                 break;
             case CCM:
                 engine = new CCMEngine();
+                break;
+            case POLY1305:
+                engine = new POLY1305Engine();
                 break;
             default:
                 break;
@@ -398,6 +402,7 @@ public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
             return null;
         }
 
+        @Override
         protected AlgorithmParameterSpec getParameterSpec(AlgorithmParameters params)
                 throws InvalidAlgorithmParameterException {
             if (params != null) {
@@ -477,6 +482,7 @@ public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
             return null;
         }
 
+        @Override
         protected AlgorithmParameterSpec getParameterSpec(AlgorithmParameters params)
                 throws InvalidAlgorithmParameterException {
             if (params != null) {
@@ -485,6 +491,79 @@ public abstract class OpenSSLAeadCipher extends OpenSSLCipher {
                 } catch (InvalidParameterSpecException e) {
                     throw new InvalidAlgorithmParameterException(
                             "Params must be convertible to CCMParameterSpec", e);
+                }
+            }
+            return null;
+        }
+    }
+
+    class POLY1305Engine extends AeadEngine {
+        @Override
+        int seal(byte[] out, int outOffset)
+            throws ShortBufferException, BadPaddingException {
+            return NativeCrypto.EVP_CIPHER_CTX_poly1305_seal(
+                evpCipher, encodedKey, iv, tagLenInBytes, out, outOffset, buf, 0, bufCount, aad);
+        }
+
+        @Override
+        int open(
+            byte[] out, int outOffset) throws ShortBufferException, BadPaddingException {
+            return NativeCrypto.EVP_CIPHER_CTX_poly1305_open(
+                evpCipher, encodedKey, iv, tagLenInBytes, out, outOffset, buf, 0, bufCount, aad);
+        }
+
+        @Override
+        void setupParams(AlgorithmParameterSpec params) throws InvalidAlgorithmParameterException {
+            final int ivLenBytes;
+            if (params == null) {
+                throw new InvalidAlgorithmParameterException("Aead Cipher must be initialized with params");
+            } else {
+                if (!(params instanceof IvParameterSpec)) {
+                    throw new InvalidAlgorithmParameterException("Must be IvParameterSpec");
+                } else {
+                    iv = ((IvParameterSpec) params).getIV();
+                }
+            }
+
+            ivLenBytes = iv.length;
+            if (ivLenBytes != 12) {
+                throw new InvalidAlgorithmParameterException(
+                        "Iv length must be 12; was " + ivLenBytes);
+            }
+
+            tagLenInBytes = 16;
+        }
+
+        @Override
+        void checkSupportedMode(Mode mode) throws NoSuchAlgorithmException {
+            if (mode != Mode.POLY1305) {
+                throw new NoSuchAlgorithmException("Mode must be POLY1305");
+            }
+        }
+
+        @Override
+        protected AlgorithmParameters getParameters() {
+            if (iv != null && iv.length > 0) {
+                try {
+                    AlgorithmParameters params = AlgorithmParameters.getInstance("ChaCha20");
+                    params.init(new IvParameterSpec(iv));
+                    return params;
+                } catch (NoSuchAlgorithmException | InvalidParameterSpecException e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected AlgorithmParameterSpec getParameterSpec(AlgorithmParameters params)
+                throws InvalidAlgorithmParameterException {
+            if (params != null) {
+                try {
+                    return params.getParameterSpec(IvParameterSpec.class);
+                } catch (InvalidParameterSpecException e) {
+                    throw new InvalidAlgorithmParameterException(
+                            "Params must be convertible to IvParameterSpec", e);
                 }
             }
             return null;

@@ -50,6 +50,8 @@ public abstract class OpenSSLEvpCipher extends OpenSSLCipher {
 
     private boolean finalUsed;
 
+    protected OpenSSLEvpCipher() {}
+
     protected OpenSSLEvpCipher(Mode mode, Padding padding) {
         super(mode, padding);
     }
