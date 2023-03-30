@@ -504,21 +504,14 @@ public class OpenSSLProvider extends Provider {
         put("Alg.Alias.Cipher.1.2.840.113549.3.4", "ARC4");
         put("Alg.Alias.Cipher.OID.1.2.840.113549.3.4", "ARC4");
 
-        // putSymmetricCipherImplClass("AES/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM");
-        // put("Alg.Alias.Cipher.GCM", "AES/GCM/NoPadding");
-        // put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.6", "AES/GCM/NoPadding");
-        // put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.26", "AES/GCM/NoPadding");
-        // put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.46", "AES/GCM/NoPadding");
-        // putSymmetricCipherImplClass(
-        //         "AES_128/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM$AES_128");
-        // putSymmetricCipherImplClass(
-        //         "AES_256/GCM/NoPadding", "OpenSSLAeadCipherAES$GCM$AES_256");
-
-        // putSymmetricCipherImplClass("AES/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV");
-        // putSymmetricCipherImplClass(
-        //     "AES_128/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV$AES_128");
-        // putSymmetricCipherImplClass(
-        //     "AES_256/GCM-SIV/NoPadding", "OpenSSLAeadCipherAES$GCM_SIV$AES_256");
+        putSymmetricCipherImplClass("AES_128/GCM/NoPadding", "OpenSSLAeadCipherAES$AES_128$GCM");
+        putSymmetricCipherImplClass("AES_128/CCM/NoPadding", "OpenSSLAeadCipherAES$AES_128$CCM");
+        put("Alg.Alias.Cipher.AES/GCM/NoPadding", "AES_128/GCM/NoPadding");
+        put("Alg.Alias.Cipher.AES/CCM/NoPadding", "AES_128/CCM/NoPadding");
+        putSymmetricCipherImplClass("AES_192/GCM/NoPadding", "OpenSSLAeadCipherAES$AES_192$GCM");
+        putSymmetricCipherImplClass("AES_192/CCM/NoPadding", "OpenSSLAeadCipherAES$AES_192$CCM");
+        putSymmetricCipherImplClass("AES_256/GCM/NoPadding", "OpenSSLAeadCipherAES$AES_256$GCM");
+        putSymmetricCipherImplClass("AES_256/CCM/NoPadding", "OpenSSLAeadCipherAES$AES_256$CCM");
 
         putSymmetricCipherImplClass("SM4/GCM/NoPadding", "OpenSSLAeadCipherSM4$GCM");
         putSymmetricCipherImplClass("SM4/CCM/NoPadding", "OpenSSLAeadCipherSM4$CCM");

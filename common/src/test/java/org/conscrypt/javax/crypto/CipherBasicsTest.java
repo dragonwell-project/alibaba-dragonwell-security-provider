@@ -37,6 +37,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.conscrypt.CCMParameterSpec;
 import org.conscrypt.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -76,6 +77,7 @@ public final class CipherBasicsTest {
     static {
         AEAD_CIPHER_TO_TEST_DATA.put("AES/GCM/NoPadding", "crypto/aes-gcm.csv");
         AEAD_CIPHER_TO_TEST_DATA.put("AES/GCM-SIV/NoPadding", "crypto/aes-gcm-siv.csv");
+        AEAD_CIPHER_TO_TEST_DATA.put("AES/CCM/NoPadding", "crypto/aes-ccm.csv");
         AEAD_CIPHER_TO_TEST_DATA.put("ChaCha20/Poly1305/NoPadding", "crypto/chacha20-poly1305.csv");
         AEAD_CIPHER_TO_TEST_DATA.put("SM4/GCM/NoPadding", "crypto/sm4-gcm.csv");
         AEAD_CIPHER_TO_TEST_DATA.put("SM4/CCM/NoPadding", "crypto/sm4-ccm.csv");
@@ -241,6 +243,8 @@ public final class CipherBasicsTest {
                     AlgorithmParameterSpec params;
                     if (transformation.contains("GCM")) {
                         params = new GCMParameterSpec(8 * tag.length, iv);
+                    } else if (transformation.contains("CCM")) {
+                        params = new CCMParameterSpec(tag.length, iv);
                     } else {
                         params = new IvParameterSpec(iv);
                     }
