@@ -339,6 +339,14 @@ public final class NativeCrypto {
                 byte[] out, int outOffset, byte[] in, int inOffset, int inLength, byte[] ad)
                 throws ShortBufferException, BadPaddingException;
 
+    static native int EVP_CIPHER_CTX_poly1305_seal(long evpCipher, byte[] key, byte[] nonce, int tagLengthInBytes,
+                byte[] out, int outOffset, byte[] in, int inOffset, int inLength, byte[] ad)
+                throws ShortBufferException, BadPaddingException;
+
+    static native int EVP_CIPHER_CTX_poly1305_open(long evpCipher, byte[] key, byte[] nonce, int tagLengthInBytes,
+                byte[] out, int outOffset, byte[] in, int inOffset, int inLength, byte[] ad)
+                throws ShortBufferException, BadPaddingException;
+
     // --- CMAC functions ------------------------------------------------------
 
     static native long CMAC_CTX_new();

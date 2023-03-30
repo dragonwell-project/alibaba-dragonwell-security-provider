@@ -493,11 +493,11 @@ public final class OpenSSLProvider extends Provider {
         putSymmetricCipherImplClass("SM4/GCM/NoPadding", "OpenSSLAeadCipherSM4$GCM");
         putSymmetricCipherImplClass("SM4/CCM/NoPadding", "OpenSSLAeadCipherSM4$CCM");
 
-        // putSymmetricCipherImplClass("ChaCha20",
-        //         "OpenSSLCipherChaCha20");
-        // putSymmetricCipherImplClass("ChaCha20/Poly1305/NoPadding",
-        //         "OpenSSLAeadCipherChaCha20");
-        // put("Alg.Alias.Cipher.ChaCha20-Poly1305", "ChaCha20/Poly1305/NoPadding");
+        putSymmetricCipherImplClass("ChaCha20",
+                "OpenSSLEvpCipherChaCha20");
+        putSymmetricCipherImplClass("ChaCha20/Poly1305/NoPadding",
+                "OpenSSLAeadCipherChaCha20");
+        put("Alg.Alias.Cipher.ChaCha20-Poly1305", "ChaCha20/Poly1305/NoPadding");
 
         /* === Mac === */
 
