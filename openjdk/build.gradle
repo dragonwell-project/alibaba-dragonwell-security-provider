@@ -186,9 +186,6 @@ dependencies {
     testRuntimeClasspath sourceSets["$preferredSourceSet"].output
 
     platformCompileOnly sourceSets.main.output
-
-    compile libraries.bouncycastle_apis,
-        libraries.bouncycastle_provider
 }
 
 nativeClassifiers.each { nativeClassifier ->
@@ -479,4 +476,3 @@ static String classifierFor(osName, archName) {
 static String sourceSetName(classifier) {
     classifier.replaceAll("-", "_")
 }
-
