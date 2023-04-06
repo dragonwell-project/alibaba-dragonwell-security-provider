@@ -511,9 +511,10 @@ public class OpenSSLX509Certificate extends X509Certificate {
             OpenSSLKey pkey = new OpenSSLKey(NativeCrypto.X509_get_pubkey(mContext, this));
             final int pkeyType = NativeCrypto.EVP_PKEY_type(pkey.getNativeRef());
             if (pkeyType == NativeConstants.EVP_PKEY_SM2) {
-                return new X509PublicKey("SM2", encoded);
+                KeyFactory kf = KeyFactory.getInstance("SM2");
+                return kf.generatePublic(new X509EncodedKeySpec(encoded));
             }
-        } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException | InvalidKeySpecException ignored) {
             // Ignored
         }
         return null;
