@@ -55,8 +55,6 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.cert.CertificateException;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 /**
  * Utility methods for SSL packet processing. Copied from the Netty project.
  * <p>
@@ -196,7 +194,7 @@ final class SSLUtils {
 
     private static CertificateFactory getCertificateFactory() {
         try {
-            return CertificateFactory.getInstance("X.509",new BouncyCastleProvider());
+            return CertificateFactory.getInstance("X.509");
         } catch (java.security.cert.CertificateException e) {
             return null;
         }
