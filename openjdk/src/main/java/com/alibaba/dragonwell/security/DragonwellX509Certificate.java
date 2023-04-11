@@ -7,14 +7,14 @@
  * https://github.com/Tongsuo-Project/Tongsuo/blob/master/LICENSE.txt
  */
 
-package net.tongsuo;
+package com.alibaba.dragonwell.security;
 
 import org.conscrypt.OpenSSLX509Certificate;
 
-public class TongsuoX509Certificate extends OpenSSLX509Certificate {
+public class DragonwellX509Certificate extends OpenSSLX509Certificate {
     private static final long serialVersionUID = 8644387307092462038L;
 
-    TongsuoX509Certificate(long ctx) throws Exception {
+    DragonwellX509Certificate(long ctx) throws Exception {
         super(ctx);
     }
 }
