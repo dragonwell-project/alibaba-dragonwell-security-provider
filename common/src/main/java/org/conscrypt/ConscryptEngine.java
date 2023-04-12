@@ -1628,7 +1628,11 @@ final class ConscryptEngine extends AbstractConscryptEngine implements NativeCry
             if (certChain == null || certChain.length == 0) {
                 throw new CertificateException("Peer sent no certificate");
             }
-            X509Certificate[] peerCertChain = SSLUtils.decodeX509CertificateChain(certChain);
+            int numCerts = certChain.length;
+            X509Certificate[] peerCertChain = new X509Certificate[numCerts];
+            for (int i=0; i<numCerts; i++) {
+                peerCertChain[i] = OpenSSLX509Certificate.fromX509Der(certChain[i]);
+            }
 
             X509TrustManager x509tm = sslParameters.getX509TrustManager();
             if (x509tm == null) {
