@@ -23,6 +23,17 @@ dependencies {
 }
 
 model {
+    platforms {
+        x86_32 {
+            architecture "x86"
+        }
+        x86_64 {
+            architecture "x86_64"
+        }
+        linux_aarch64 {
+            architecture "aarch64"
+        }
+    }
     components {
         // Builds exe/ which generates the content of NativeConstants.java
         gen(NativeExecutableSpec) {
