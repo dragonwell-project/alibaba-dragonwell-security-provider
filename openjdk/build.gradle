@@ -10,35 +10,56 @@ apply plugin: 'biz.aQute.bnd.builder'
 
 description = 'Tongsuo: OpenJdk'
 
+enum NativeBuildInfo {
+    LINUX_X86_64("linux", "x86_64"),
+    LINUX_AARCH_64("linux", "aarch_64");
+
+    public final String os
+    public final String arch
+
+    private static final gradleArchMap = [
+            "aarch_64": "aarch64",
+            "x86_64" : "x86-64",
+    ]
+
+    NativeBuildInfo(String os, String arch) {
+        this.os = os
+        this.arch = arch
+    }
+
+    // Gradle equivalent to Maven arch
+    String gradleArch() {
+        gradleArch(arch)
+    }
+
+    static String gradleArch(String arch) {
+        gradleArchMap.get(arch)
+    }
+
+    // Target platform identifier as used by Gradle
+    String targetPlatform() {
+        "${os}_${gradleArch()}"
+    }
+}
+
 ext {
     jniSourceDir = "$rootDir/common/src/jni"
     assert file("$jniSourceDir").exists()
 
     // Build the list of classifiers that will be used in the build.
-    arch32Name = 'x86'
-    arch64Name = 'x86_64'
+    archName = NativeBuildInfo.gradleArch("${osdetector.arch}")
     nativeClassifiers = []
     nativeClassifier64Bit = null
-    nativeClassifier32Bit = null
     preferredClassifier = null
     preferredSourceSet = null
     preferredNativeFileDir = null
     if (build64Bit) {
         // Add the 64-Bit classifier first, as the preferred classifier.
-        nativeClassifier64Bit = classifierFor(osName, arch64Name)
+        nativeClassifier64Bit = classifierFor(osName, archName)
         nativeClassifiers += nativeClassifier64Bit
         preferredClassifier = nativeClassifier64Bit
         preferredSourceSet = sourceSetName(preferredClassifier)
         preferredNativeFileDir = nativeResourcesDir(preferredClassifier)
-    }
-    if (build32Bit) {
-        nativeClassifier32Bit = classifierFor(osName, arch32Name)
-        nativeClassifiers += nativeClassifier32Bit
-        if (preferredClassifier == null) {
-            preferredClassifier = nativeClassifier32Bit
-            preferredSourceSet = sourceSetName(preferredClassifier)
-            preferredNativeFileDir = nativeResourcesDir(preferredClassifier)
-        }
     }
 }
 
@@ -274,11 +295,13 @@ javadoc {
 
 model {
     platforms {
-        x86 {
-            architecture arch32Name
-        }
         x86_64 {
-            architecture arch64Name
+            operatingSystem "linux"
+            architecture archName
+        }
+        linux_aarch64 {
+            operatingSystem "linux"
+            architecture "arm64"
         }
     }
 
@@ -289,9 +312,14 @@ model {
     components {
         // Builds the JNI library.
         conscrypt_openjdk_jni(NativeLibrarySpec) {
-            if (build32Bit) { targetPlatform arch32Name }
-            if (build64Bit) { targetPlatform arch64Name }
-
+            if (build64Bit) {
+                if (archName == "aarch64") {
+                    targetPlatform "linux_aarch64"
+                }
+                if (archName == "x86_64") {
+                    targetPlatform "x86_64"
+                }
+            }
             sources {
                 cpp {
                     source {
@@ -309,12 +337,10 @@ model {
                     // Set up 32-bit vs 64-bit build
                     def building64Bit = false
                     def libPath = "$tongsuoLibDir"
-                    if (targetPlatform.getArchitecture().getName() == "x86") {
-                        // nothing
-                    } else if (targetPlatform.getArchitecture().getName() == "x86-64") {
+                    if (targetPlatform.getArchitecture().getName() == "x86-64"
+                            || targetPlatform.getArchitecture().getName() == "arm-v8") {
                         building64Bit = true
-                        if (file("$tongsuoLib64Dir").exists())
-                            libPath = "$tongsuoLib64Dir"
+                        if (file("$tongsuoLib64Dir").exists()) libPath = "$tongsuoLib64Dir"
                     } else {
                         throw new GradleException("Unknown architecture: " +
                                 targetPlatform.getArchitecture().name)
@@ -413,6 +439,9 @@ model {
         $.binaries.withType(SharedLibraryBinarySpec).each { binary ->
             // Build the native artifact classifier from the OS and architecture.
             def archName = binary.targetPlatform.architecture.name.replaceAll('-', '_')
+            if (archName == "arm_v8") {
+                archName = "aarch64"
+            }
             def classifier = classifierFor(osName, archName)
             def sourceSetName = sourceSetName("$classifier")
             def source = binary.sharedLibraryFile
