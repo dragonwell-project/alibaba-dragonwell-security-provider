@@ -30,14 +30,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest]
         include:
           - platform: ubuntu-latest
             tools_url: https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          - platform: macos-latest
-            tools_url: https://dl.google.com/android/repository/commandlinetools-mac-9477386_latest.zip
-          - platform: windows-latest
-            tools_url: https://dl.google.com/android/repository/commandlinetools-win-9477386_latest.zip
 
     runs-on: ${{ matrix.platform }}
 
@@ -73,22 +69,10 @@ jobs:
             ninja-build \
             openjdk-11-jre-headless
 
-      - name: Setup macOS environment
-        if: runner.os == 'macOS'
-        run: |
-          brew update || echo update failed
-          brew install ninja || echo update failed
-
       - name: install Go
         uses: actions/setup-go@v1
         with:
           go-version: '1.19.3'
-
-      - name: Setup Windows environment
-        if: runner.os == 'Windows'
-        run: |
-          choco install nasm -y
-          choco install ninja -y
 
       - name: Fetch BoringSSL source
         uses: actions/download-artifact@v1
@@ -102,24 +86,6 @@ jobs:
           cd "$BORINGSSL_HOME"
           git checkout --progress --force -B master
 
-      - name: Build BoringSSL x86 and ARM MacOS
-        if: runner.os == 'macOS'
-        env:
-          # For compatibility, but 10.15 target requires 16-byte stack alignment.
-          MACOSX_DEPLOYMENT_TARGET: 10.11
-        run: |
-          mkdir -p "$BORINGSSL_HOME/build.x86"
-          pushd "$BORINGSSL_HOME/build.x86"
-          cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -GNinja ..
-          ninja
-          popd
-
-          mkdir -p "$BORINGSSL_HOME/build.arm"
-          pushd "$BORINGSSL_HOME/build.arm"
-          cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -GNinja ..
-          ninja
-          popd
-
       - name: Build BoringSSL 64-bit Linux
         if: runner.os == 'Linux'
         run: |
@@ -128,35 +94,6 @@ jobs:
           cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -GNinja ..
           ninja
           popd
-
-      - name: Build BoringSSL 64-bit Windows
-        if: runner.os == 'Windows'
-        run: |
-          cd $Env:BORINGSSL_HOME
-
-          & $Env:GITHUB_WORKSPACE\.github\workflows\vsenv.ps1 -arch x64 -hostArch x64
-          mkdir build64
-          pushd build64
-          cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE=/MT -DCMAKE_CXX_FLAGS_RELEASE=/MT -GNinja ..
-          ninja
-          popd
-
-      - name: Setup Android environment
-        shell: bash
-        if: runner.os == 'Linux'
-        run: |
-          cd "${{ runner.temp }}"
-          curl -L "${{ matrix.tools_url }}" -o android-tools.zip
-          mkdir -p "$ANDROID_HOME"
-          unzip -q android-tools.zip -d "$ANDROID_HOME"
-          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses || true
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" tools
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" platform-tools
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" 'build-tools;30.0.3'
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" 'platforms;android-26'
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" 'extras;android;m2repository'
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" 'ndk;25.2.9519653'
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" 'cmake;3.22.1'
 
       - name: Build with Gradle
         shell: bash
@@ -229,18 +166,6 @@ jobs:
           name: m2repo-Linux
           path: ${{ runner.temp }}/m2
 
-      - name: Download Maven repository for MacOS
-        uses: actions/download-artifact@v1
-        with:
-          name: m2repo-macOS
-          path: ${{ runner.temp }}/m2
-
-      - name: Download Maven repository for Windows
-        uses: actions/download-artifact@v1
-        with:
-          name: m2repo-Windows
-          path: ${{ runner.temp }}/m2
-
       - name: Build UberJAR with Gradle
         shell: bash
         run: |
@@ -263,7 +188,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest]
         java: [8, 9, 11]
         include:
           - java: 8

@@ -2,7 +2,6 @@ import org.ajoberstar.grgit.Grgit
 import org.gradle.util.VersionNumber
 
 buildscript {
-    ext.android_tools = 'com.android.tools.build:gradle:7.4.0'
     ext.errorproneVersion = '2.4.0'
     ext.errorproneJavacVersion = '9+181-r4173-1'
     repositories {
@@ -12,7 +11,6 @@ buildscript {
     dependencies {
         // This must be applied in the root project otherwise each subproject will
         // have it in a different ClassLoader.
-        classpath android_tools
         classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.0'
     }
 }
@@ -26,44 +24,13 @@ plugins {
 }
 
 subprojects {
-    def androidProject = ((project.name == 'conscrypt-android')
-            || (project.name == 'conscrypt-android-platform')
-            || (project.name == 'conscrypt-benchmark-android')
-            || (project.name == 'conscrypt-benchmark-caliper'))
-    if (androidProject) {
-        repositories {
-            google()
-        }
-    } else {
-        apply plugin: 'java-library'
-        apply plugin: 'cpp'
-
-        model {
-            toolChains {
-                visualCpp(VisualCpp)
-                // Prefer Clang over Gcc (order here matters!)
-                clang(Clang) {
-                    // Gradle 7.x still seems to get confused about toolchains on Mac
-                    // so explicitly add -arch args.
-                    target("osx_aarch64") {
-                        cppCompiler.withArguments { args ->
-                            args << "-arch" << "arm64"
-                        }
-                        linker.withArguments { args ->
-                            args << "-arch" << "arm64"
-                        }
-                    }
-                    target("osx_x86-64") {
-                        cppCompiler.withArguments { args ->
-                            args << "-arch" << "x86_64"
-                        }
-                        linker.withArguments { args ->
-                            args << "-arch" << "x86_64"
-                        }
-                    }
-                }
-                gcc(Gcc)
-            }
+    apply plugin: 'java-library'
+    apply plugin: 'cpp'
+    model {
+        toolChains {
+            // Prefer Clang over Gcc (order here matters!)
+            clang(Clang)
+            gcc(Gcc)
         }
     }
     apply plugin: "idea"
@@ -75,9 +42,6 @@ subprojects {
     version = "2.6-SNAPSHOT"
 
     ext {
-        // Needs to be binary compatible with androidMinSdkVersion
-        androidMinJavaVersion = JavaVersion.VERSION_1_8
-
         if (project.hasProperty("boringsslHome")) {
             boringsslHome = project.property("boringsslHome")
         } else {
@@ -94,7 +58,6 @@ subprojects {
 
         jmhVersion = '1.21'
         libraries = [
-                android_tools: android_tools,
                 roboelectric: 'org.robolectric:android-all:7.1.0_r7-robolectric-0',
 
                 // Test dependencies.
@@ -153,77 +116,67 @@ subprojects {
         outputFile "build/generated/resources/org/conscrypt/conscrypt.properties"
     }
 
-    if (!androidProject) {
-        java {
-            toolchain {
-                // Compile with a real JDK 8 so we don't end up with accidental dependencies
-                // on Java 11 bootclasspath, e.g. ByteBuffer.flip().
-                languageVersion = JavaLanguageVersion.of(8)
+    java {
+        toolchain {
+            // Compile with a real JDK 8 so we don't end up with accidental dependencies
+            // on Java 11 bootclasspath, e.g. ByteBuffer.flip().
+            languageVersion = JavaLanguageVersion.of(8)
+        }
+    }
+    [tasks.named("compileJava"), tasks.named("compileTestJava")].forEach { t ->
+        t.configure {
+            options.compilerArgs += ["-Xlint:all", "-Xlint:-options", '-Xmaxwarns', '9999999']
+            options.encoding = "UTF-8"
+            if (rootProject.hasProperty('failOnWarnings') && rootProject.failOnWarnings.toBoolean()) {
+                options.compilerArgs += ["-Werror"]
             }
         }
-
-        [tasks.named("compileJava"), tasks.named("compileTestJava")].forEach { t ->
-            t.configure {
-                options.compilerArgs += ["-Xlint:all", "-Xlint:-options", '-Xmaxwarns', '9999999']
-                options.encoding = "UTF-8"
-                if (rootProject.hasProperty('failOnWarnings') && rootProject.failOnWarnings.toBoolean()) {
-                    options.compilerArgs += ["-Werror"]
-                }
-            }
+    }
+    tasks.named("compileTestJava").configure {
+        // serialVersionUID is basically guaranteed to be useless in our tests
+        options.compilerArgs += ["-Xlint:-serial"]
+    }
+    tasks.named("jar").configure {
+        manifest {
+            attributes('Implementation-Title': name,
+                    'Implementation-Version': archiveVersion,
+                    'Built-By': System.getProperty('user.name'),
+                    'Built-JDK': System.getProperty('java.version'),
+                    'Source-Compatibility': sourceCompatibility,
+                    'Target-Compatibility': targetCompatibility)
         }
-
-        tasks.named("compileTestJava").configure {
-            // serialVersionUID is basically guaranteed to be useless in our tests
-            options.compilerArgs += ["-Xlint:-serial"]
+    }
+    javadoc.options {
+        encoding = 'UTF-8'
+        links 'https://docs.oracle.com/javase/8/docs/api/'
+    }
+    // All non-Android projects build with Java 8, so disable doclint as it's noisy.
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
         }
-
-        tasks.named("jar").configure {
-            manifest {
-                attributes('Implementation-Title': name,
-                        'Implementation-Version': archiveVersion,
-                        'Built-By': System.getProperty('user.name'),
-                        'Built-JDK': System.getProperty('java.version'),
-                        'Source-Compatibility': sourceCompatibility,
-                        'Target-Compatibility': targetCompatibility)
-            }
+    }
+    tasks.register("javadocJar", Jar) {
+        classifier = 'javadoc'
+        from javadoc
+    }
+    tasks.register("sourcesJar", Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+    // At a test failure, log the stack trace to the console so that we don't
+    // have to open the HTML in a browser.
+    test {
+        testLogging {
+            exceptionFormat = 'full'
+            showExceptions true
+            showCauses true
+            showStackTraces true
+            showStandardStreams = true
         }
-
-        javadoc.options {
-            encoding = 'UTF-8'
-            links 'https://docs.oracle.com/javase/8/docs/api/'
-        }
-
-        // All non-Android projects build with Java 8, so disable doclint as it's noisy.
-        allprojects {
-            tasks.withType(Javadoc) {
-                options.addStringOption('Xdoclint:none', '-quiet')
-            }
-        }
-
-        tasks.register("javadocJar", Jar) {
-            classifier = 'javadoc'
-            from javadoc
-        }
-
-        tasks.register("sourcesJar", Jar) {
-            classifier = 'sources'
-            from sourceSets.main.allSource
-        }
-
-        // At a test failure, log the stack trace to the console so that we don't
-        // have to open the HTML in a browser.
-        test {
-            testLogging {
-                exceptionFormat = 'full'
-                showExceptions true
-                showCauses true
-                showStackTraces true
-                showStandardStreams = true
-            }
-            // Enable logging for all conscrypt classes while running tests.
-            systemProperty 'java.util.logging.config.file', "${rootDir}/test_logging.properties"
-            maxHeapSize = '1500m'
-        }
+        // Enable logging for all conscrypt classes while running tests.
+        systemProperty 'java.util.logging.config.file', "${rootDir}/test_logging.properties"
+        maxHeapSize = '1500m'
     }
 }
 

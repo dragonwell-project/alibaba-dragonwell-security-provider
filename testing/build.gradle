@@ -17,8 +17,7 @@ dependencies {
     // constants directly. The stubs libraries should not end up in the
     // final build.
     compileOnly project(':conscrypt-constants'),
-                project(':conscrypt-libcore-stub'),
-                project(':conscrypt-android-stub')
+                project(':conscrypt-libcore-stub')
 
     implementation libraries.bouncycastle_apis,
             libraries.bouncycastle_provider,

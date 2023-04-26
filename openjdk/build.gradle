@@ -20,18 +20,7 @@ description = 'Conscrypt: OpenJdk'
 // This class encapsulates both naming schemes as well as other per-platform information
 // about native builds, more of which will migrate in here over time.
 enum NativeBuildInfo {
-    WINDOWS_X86_64("windows", "x86_64"),
-    LINUX_X86_64("linux", "x86_64"),
-    MAC_X86_64("osx", "x86_64") {
-        String libDir() {
-            "build.x86"
-        }
-    },
-    MAC_AARCH64("osx", "aarch_64") {
-        String libDir() {
-            "build.arm"
-        }
-    };
+    LINUX_X86_64("linux", "x86_64");
 
     static String buildDir = "FIXME" // See below
 
@@ -40,7 +29,6 @@ enum NativeBuildInfo {
 
     // Maps osdetector arch to Gradle equivalent.
     private static final gradleArchMap = [
-            "aarch_64": "aarch64",
             "x86_64" : "x86-64",
     ]
 
@@ -437,49 +425,6 @@ model {
                         } else {
                             linker.args "-lstdc++"
                         }
-                    } else if (toolChain in VisualCpp) {
-                        cppCompiler.define "DLL_EXPORT"
-                        cppCompiler.define "WIN32_LEAN_AND_MEAN"
-                        cppCompiler.define "NOMINMAX"
-                        cppCompiler.define "WIN64"
-                        cppCompiler.define "_WINDOWS"
-                        cppCompiler.define "UNICODE"
-                        cppCompiler.define "_UNICODE"
-                        cppCompiler.define "NDEBUG"
-
-                        cppCompiler.args "/nologo",
-                                "/MT",
-                                "/WX-",
-                                "/Wall",
-                                "/O2",
-                                "/Oi",
-                                "/Ot",
-                                "/GL",
-                                "/GS",
-                                "/Gy",
-                                "/fp:precise",
-                                "-wd4514", // Unreferenced inline function removed
-                                "-wd4548", // Expression before comma has no effect
-                                "-wd4625", // Copy constructor was implicitly defined as deleted
-                                "-wd4626", // Assignment operator was implicitly defined as deleted
-                                "-wd4710", // function not inlined
-                                "-wd4711", // function inlined
-                                "-wd4820", // Extra padding added to struct
-                                "-wd4946", // reinterpret_cast used between related classes:
-                                "-wd4996", // Thread safety for strerror
-                                "-wd5027", // Move assignment operator was implicitly defined as deleted
-                                "-I$jniSourceDir/main/include",
-                                "-I$jniSourceDir/unbundled/include",
-                                "-I$boringsslIncludeDir",
-                                "-I$jdkIncludeDir",
-                                "-I$jdkIncludeDir/win32"
-
-                        // Static link to BoringSSL
-                        linker.args "-WX",
-                                "ws2_32.lib",
-                                "advapi32.lib",
-                                "${libPath}\\ssl\\ssl.lib",
-                                "${libPath}\\crypto\\crypto.lib"
                     }
                 }
 
