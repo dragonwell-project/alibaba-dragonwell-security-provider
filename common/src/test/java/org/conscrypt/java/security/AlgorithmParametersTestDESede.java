@@ -22,6 +22,7 @@ import java.security.AlgorithmParameters;
 import java.security.Provider;
 import javax.crypto.spec.IvParameterSpec;
 import org.conscrypt.TestUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -43,6 +44,7 @@ public class AlgorithmParametersTestDESede extends AbstractAlgorithmParametersTe
         super("DESede", new AlgorithmParameterSymmetricHelper("DESede", "CBC/PKCS5PADDING", 112), new IvParameterSpec(parameterData));
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testEncoding() throws Exception {
         ServiceTester.test("AlgorithmParameters")

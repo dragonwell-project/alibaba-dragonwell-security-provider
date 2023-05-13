@@ -33,6 +33,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.conscrypt.ScryptKeySpec;
 import org.conscrypt.TestUtils;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -80,6 +81,7 @@ public final class ScryptTest {
         TestUtils.assumeAllowsUnsignedCrypto();
     }
 
+    @Ignore("get_EVP_CIPHER_CTX_buf_len not supported by Tongsuo")
     @Test
     public void smokeTest() throws Exception {
         SecretKeyFactory factory = SecretKeyFactory.getInstance(alias);

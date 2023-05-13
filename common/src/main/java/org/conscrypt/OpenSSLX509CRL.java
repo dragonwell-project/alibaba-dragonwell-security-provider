@@ -215,7 +215,7 @@ final class OpenSSLX509CRL extends X509CRL {
             InvalidKeyException, SignatureException {
         try {
             NativeCrypto.X509_CRL_verify(mContext, this, pkey.getNativeRef());
-        } catch (BadPaddingException | IllegalBlockSizeException e) {
+        } catch (BadPaddingException | IllegalBlockSizeException | RuntimeException e) {
             throw new SignatureException(e);
         }
     }

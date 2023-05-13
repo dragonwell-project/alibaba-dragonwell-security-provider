@@ -246,7 +246,7 @@ publishing.publications.maven {
 }
 
 jar.manifest {
-    attributes ('BoringSSL-Version' : boringSslVersion,
+    attributes ('TONGSUO-Version' : tongsuoVersion,
                 'Automatic-Module-Name' : 'org.conscrypt',
                 'Bundle-SymbolicName': 'org.conscrypt',
                 '-exportcontents': 'org.conscrypt.*')
@@ -267,6 +267,8 @@ dependencies {
     testRuntimeOnly sourceSets["$preferredSourceSet"].output
 
     platformCompileOnly sourceSets.main.output
+
+    compileOnly libraries.bouncycastle_apis, libraries.bouncycastle_provider
 }
 
 nativeBuilds.each { nativeBuild ->
@@ -391,7 +393,7 @@ model {
                     cppCompiler.define "CONSCRYPT_OPENJDK"
                     def jdkIncludeDir = jniIncludeDir()
                     def nativeBuild = NativeBuildInfo.find(targetPlatform)
-                    String libPath = "$boringsslHome/${nativeBuild.libDir()}"
+                    String libPath = "$tongsuoHome/${nativeBuild.libDir()}"
 
                     if (toolChain in Clang || toolChain in Gcc) {
                         cppCompiler.args "-Wall",
@@ -400,22 +402,21 @@ model {
                                 "-std=c++17",
                                 "-I$jniSourceDir/main/include",
                                 "-I$jniSourceDir/unbundled/include",
-                                "-I$boringsslIncludeDir",
+                                "-I$tongsuoIncludeDir",
                                 "-I$jdkIncludeDir",
                                 "-I$jdkIncludeDir/linux",
-                                "-I$jdkIncludeDir/darwin",
-                                "-I$jdkIncludeDir/win32"
+                                "-Wno-deprecated-declarations"
                         if (rootProject.hasProperty('checkErrorQueue')) {
                             System.out.println("Compiling with error queue checking enabled")
                             cppCompiler.define "CONSCRYPT_CHECK_ERROR_QUEUE"
                         }
 
-                        // Static link to BoringSSL
+                        // Static link to Tongsuo
                         linker.args "-O3",
                                 "-fvisibility=hidden",
                                 "-lpthread",
-                                libPath + "/ssl/libssl.a",
-                                libPath + "/crypto/libcrypto.a"
+                                libPath + "/lib/libssl.a",
+                                libPath + "/lib/libcrypto.a"
                         if (targetPlatform.operatingSystem.isLinux()) {
                             // Static link libstdc++ and libgcc because
                             // they are not available in some restrictive Linux

@@ -151,8 +151,8 @@ public class NativeCryptoArgTest {
     @Test
     public void evpMethods() throws Throwable {
         String[] illegalArgMethods = new String[] {
-                "EVP_AEAD_CTX_open_buf",
-                "EVP_AEAD_CTX_seal_buf",
+                // "EVP_AEAD_CTX_open_buf",
+                // "EVP_AEAD_CTX_seal_buf",
                 "EVP_PKEY_new_RSA"
         };
         String[] nonThrowingMethods = new String[] {

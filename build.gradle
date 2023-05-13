@@ -42,24 +42,22 @@ subprojects {
     version = "2.6-SNAPSHOT"
 
     ext {
-        if (project.hasProperty("boringsslHome")) {
-            boringsslHome = project.property("boringsslHome")
+        if (project.hasProperty("tongsuoHome")) {
+            tongsuoHome = project.property("tongsuoHome")
         } else {
-            boringsslHome = "$System.env.BORINGSSL_HOME"
+            tongsuoHome = "$System.env.TONGSUO_HOME"
         }
-        boringsslIncludeDir = normalizePath("$boringsslHome/include")
+        tongsuoIncludeDir = normalizePath("$tongsuoHome/include")
 
         // Ensure the environment is configured properly.
-        assert file("$boringsslIncludeDir").exists()
+        assert file("$tongsuoIncludeDir").exists()
 
-        // Get the commit hash for BoringSSL.
-        boringSslGit = Grgit.open(dir: boringsslHome)
-        boringSslVersion = boringSslGit.head().id
+        // Get the commit hash for Tongsuo.
+        tongsuoGit = Grgit.open(dir: tongsuoHome)
+        tongsuoVersion = tongsuoGit.head().id
 
         jmhVersion = '1.21'
         libraries = [
-                roboelectric: 'org.robolectric:android-all:7.1.0_r7-robolectric-0',
-
                 // Test dependencies.
                 bouncycastle_apis: 'org.bouncycastle:bcpkix-jdk15on:1.63',
                 bouncycastle_provider: 'org.bouncycastle:bcprov-jdk15on:1.63',
@@ -112,7 +110,7 @@ subprojects {
         property("org.conscrypt.version.major", parsedVersion.getMajor())
         property("org.conscrypt.version.minor", parsedVersion.getMinor())
         property("org.conscrypt.version.patch", parsedVersion.getMicro())
-        property("org.conscrypt.boringssl.version", boringSslVersion)
+        property("org.conscrypt.tongsuo.version", tongsuoVersion)
         outputFile "build/generated/resources/org/conscrypt/conscrypt.properties"
     }
 

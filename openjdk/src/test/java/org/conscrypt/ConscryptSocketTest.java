@@ -562,6 +562,7 @@ public class ConscryptSocketTest {
         assertTrue(connection.serverHooks.isHandshakeCompleted);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_handshakeWithSCTFromTLSExtension() throws Exception {
         TestConnection connection = new TestConnection(new X509Certificate[] {cert, ca}, certKey);

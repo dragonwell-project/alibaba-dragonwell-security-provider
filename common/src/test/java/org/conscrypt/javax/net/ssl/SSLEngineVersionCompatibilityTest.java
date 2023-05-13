@@ -74,6 +74,7 @@ import org.conscrypt.tlswire.handshake.HelloExtension;
 import org.conscrypt.tlswire.handshake.ServerNameHelloExtension;
 import org.conscrypt.tlswire.record.TlsProtocols;
 import org.conscrypt.tlswire.record.TlsRecord;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -581,6 +582,7 @@ public class SSLEngineVersionCompatibilityTest {
         return data;
     }
 
+    @Ignore("SSL_get_tls_unique not supported by Tongsuo")
     @Test
     public void test_SSLEngine_TlsUnique() throws Exception {
         // tls_unique isn't supported in TLS 1.3

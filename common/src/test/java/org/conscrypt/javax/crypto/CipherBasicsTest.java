@@ -39,6 +39,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.conscrypt.TestUtils;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -85,6 +86,7 @@ public final class CipherBasicsTest {
         TestUtils.assumeAllowsUnsignedCrypto();
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testBasicEncryption() throws Exception {
         for (Provider p : Security.getProviders()) {
@@ -407,6 +409,7 @@ public final class CipherBasicsTest {
      *
      * @see https://bugs.openjdk.java.net/browse/JDK-8181386
      */
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testByteBufferShiftedAlias() throws Exception {
         byte[] ptVector = new byte[8192];

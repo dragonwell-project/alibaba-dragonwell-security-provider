@@ -25,6 +25,7 @@ import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource;
 import javax.crypto.spec.PSource.PSpecified;
 import org.conscrypt.TestUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -126,6 +127,7 @@ public class AlgorithmParametersTestOAEP extends AbstractAlgorithmParametersTest
         super("OAEP", new AlgorithmParameterAsymmetricHelper("RSA/ECB/OAEPPadding"), new OAEPParameterSpec("SHA-1", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT));
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testEncoding() throws Exception {
         ServiceTester.test("AlgorithmParameters")

@@ -50,6 +50,7 @@ public enum EllipticCurve {
     BRAINPOOLP521R1(28, "brainpoolP521r1"),
     X25519(29, "x25519"),
     X448(30, "x448"),
+    SM2(41, "sm2"),
     ARBITRARY_PRIME(0xFF01, "arbitrary_explicit_prime_curves"),
     ARBITRARY_CHAR2(0xFF02, "arbitrary_explicit_char2_curves");
     public final int identifier;

@@ -698,16 +698,19 @@ public class SSLSocketVersionCompatibilityTest {
         c.close();
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSLSocket_clientAuth_OpaqueKey_RSA() throws Exception {
         run_SSLSocket_clientAuth_OpaqueKey(TestKeyStore.getClientCertificate());
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSLSocket_clientAuth_OpaqueKey_EC_RSA() throws Exception {
         run_SSLSocket_clientAuth_OpaqueKey(TestKeyStore.getClientEcRsaCertificate());
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSLSocket_clientAuth_OpaqueKey_EC_EC() throws Exception {
         run_SSLSocket_clientAuth_OpaqueKey(TestKeyStore.getClientEcEcCertificate());
@@ -859,6 +862,7 @@ public class SSLSocketVersionCompatibilityTest {
         c.close();
     }
 
+    @Ignore("SSL_set_session_creation_enabled not supported by Tongsuo")
     @Test
     public void test_SSLSocket_setEnableSessionCreation_server() throws Exception {
         final TestSSLContext c = new TestSSLContext.Builder()
@@ -893,6 +897,7 @@ public class SSLSocketVersionCompatibilityTest {
         c.close();
     }
 
+    @Ignore("SSL_set_session_creation_enabled not supported by Tongsuo")
     @Test
     public void test_SSLSocket_setEnableSessionCreation_client() throws Exception {
         final TestSSLContext c = new TestSSLContext.Builder()
@@ -1984,6 +1989,7 @@ public class SSLSocketVersionCompatibilityTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSLSocket_TlsUnique() throws Exception {
         // tls_unique isn't supported in TLS 1.3
@@ -2012,6 +2018,7 @@ public class SSLSocketVersionCompatibilityTest {
     // Tests that all cipher suites have a 12-byte tls-unique channel binding value.  If this
     // test fails, that means some cipher suite has been added that uses a customized verify_data
     // length and we need to update MAX_TLS_UNIQUE_LENGTH in native_crypto.cc to account for that.
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_SSLSocket_TlsUniqueLength() throws Exception {
         // tls_unique isn't supported in TLS 1.3

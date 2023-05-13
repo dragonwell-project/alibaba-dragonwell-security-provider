@@ -16,7 +16,6 @@
 
 package org.conscrypt;
 
-import static org.conscrypt.NativeConstants.SSL_MODE_CBC_RECORD_SPLITTING;
 import static org.conscrypt.NativeConstants.SSL_OP_CIPHER_SERVER_PREFERENCE;
 import static org.conscrypt.NativeConstants.SSL_OP_NO_TICKET;
 import static org.conscrypt.NativeConstants.SSL_RECEIVED_SHUTDOWN;
@@ -352,7 +351,7 @@ final class NativeSsl {
 
         // BEAST attack mitigation (1/n-1 record splitting for CBC cipher suites
         // with TLSv1 and SSLv3).
-        NativeCrypto.SSL_set_mode(ssl, this, SSL_MODE_CBC_RECORD_SPLITTING);
+        // NativeCrypto.SSL_set_mode(ssl, this, SSL_MODE_CBC_RECORD_SPLITTING);
 
         setCertificateValidation();
         setTlsChannelId(channelIdPrivateKey);
@@ -603,9 +602,9 @@ final class NativeSsl {
         }
     }
 
-    int getMaxSealOverhead() {
-        return NativeCrypto.SSL_max_seal_overhead(ssl, this);
-    }
+    // int getMaxSealOverhead() {
+    //     return NativeCrypto.SSL_max_seal_overhead(ssl, this);
+    // }
 
     void close() {
         lock.writeLock().lock();

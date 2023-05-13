@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.HashSet;
 import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -74,8 +75,7 @@ final class SSLParametersImpl implements Cloneable {
     String[] enabledProtocols;
     // set to indicate when obsolete protocols are filtered
     boolean isEnabledProtocolsFiltered;
-    // The TLS 1.0-1.2 cipher suites enabled for the SSL connection.  TLS 1.3 cipher suites
-    // cannot be customized, so for simplicity this field never contains any TLS 1.3 suites.
+    // The TLS 1.0-1.2 cipher suites enabled for the SSL connection.
     String[] enabledCipherSuites;
 
     // if the peer with this parameters tuned to work in client mode
@@ -247,11 +247,21 @@ final class SSLParametersImpl implements Cloneable {
      * @return the names of enabled cipher suites
      */
     String[] getEnabledCipherSuites() {
-        if (Arrays.asList(enabledProtocols).contains(NativeCrypto.SUPPORTED_PROTOCOL_TLSV1_3)) {
-            return SSLUtils.concat(
-                    NativeCrypto.SUPPORTED_TLS_1_3_CIPHER_SUITES, enabledCipherSuites);
+        if (enabledCipherSuites == null) {
+            enabledCipherSuites = new String[0];
         }
-        return enabledCipherSuites.clone();
+        ArrayList<String> tls13Ciphers = new ArrayList<String>();
+
+        if (Arrays.asList(enabledProtocols).contains(NativeCrypto.SUPPORTED_PROTOCOL_TLSV1_3)) {
+            Set<String> enabledCiphersSet = new HashSet<String>(Arrays.asList(enabledCipherSuites));
+            for (String c : NativeCrypto.SUPPORTED_TLS_1_3_CIPHER_SUITES) {
+                if (!enabledCiphersSet.contains(c)) {
+                    tls13Ciphers.add(c);
+                }
+            }
+        }
+        return SSLUtils.concat(tls13Ciphers.toArray(EMPTY_STRING_ARRAY),
+                               enabledCipherSuites);
     }
 
     /**
