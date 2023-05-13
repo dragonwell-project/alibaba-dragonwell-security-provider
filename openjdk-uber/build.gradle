@@ -82,7 +82,7 @@ if (buildUberJar) {
     // Note that this assumes that the version of BoringSSL for each
     // artifact exactly matches the one on the current system.
     jar.manifest {
-        attributes ('BoringSSL-Version': boringSslVersion,
+        attributes ('TONGSUO-Version': tongsuoVersion,
                     'Automatic-Module-Name': 'org.conscrypt',
                     'Bundle-SymbolicName': 'org.conscrypt',
                     '-exportcontents': 'org.conscrypt.*')

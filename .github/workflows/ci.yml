@@ -8,32 +8,29 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  boringssl_clone:
-    # This step ensures that all builders have the same version of BoringSSL
+  tongsuo_clone:
+    # This step ensures that all builders have the same version of Tongsuo SSL
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone BoringSSL repo
+      - name: Clone Tongsuo repo
         run: |
-          git clone --depth 1 --filter=blob:none --no-checkout https://github.com/google/boringssl.git "${{ runner.temp }}/boringssl"
-          echo Using BoringSSL commit: $(cd "${{ runner.temp }}/boringssl"; git rev-parse HEAD)
+          git clone --depth 1 --filter=blob:none --no-checkout -b 8.3-stable https://github.com/Tongsuo-Project/Tongsuo.git "${{ runner.temp }}/Tongsuo"
+          echo Using Tongsuo commit: $(cd "${{ runner.temp }}/Tongsuo"; git rev-parse HEAD)
 
-      - name: Archive BoringSSL source
+      - name: Archive Tongsuo source
         uses: actions/upload-artifact@v1
         with:
-          name: boringssl-source
-          path: ${{ runner.temp }}/boringssl
+          name: tongsuo-source
+          path: ${{ runner.temp }}/Tongsuo
 
   build:
-    needs: boringssl_clone
+    needs: tongsuo_clone
 
     strategy:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest]
-        include:
-          - platform: ubuntu-latest
-            tools_url: https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
 
     runs-on: ${{ matrix.platform }}
 
@@ -46,10 +43,7 @@ jobs:
       - name: Set runner-specific environment variables
         shell: bash
         run: |
-          echo "ANDROID_HOME=${{ runner.temp }}/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=${{ runner.temp }}/android-sdk" >> $GITHUB_ENV
-          echo "BORINGSSL_HOME=${{ runner.temp }}/boringssl" >> $GITHUB_ENV
-          echo "SDKMANAGER=${{ runner.temp }}/android-sdk/cmdline-tools/bin/sdkmanager" >> $GITHUB_ENV
+          echo "TONGSUO_HOME=${{ runner.temp }}/Tongsuo" >> $GITHUB_ENV
           echo "M2_REPO=${{ runner.temp }}/m2" >> $GITHUB_ENV
 
       - uses: actions/checkout@v2
@@ -60,39 +54,34 @@ jobs:
           echo "CC=clang" >> $GITHUB_ENV
           echo "CXX=clang++" >> $GITHUB_ENV
 
-          sudo dpkg --add-architecture i386
           sudo add-apt-repository ppa:openjdk-r/ppa
           sudo apt-get -qq update
           sudo apt-get -qq install -y --no-install-recommends \
             gcc-multilib \
             g++-multilib \
-            ninja-build \
             openjdk-11-jre-headless
 
-      - name: install Go
-        uses: actions/setup-go@v1
-        with:
-          go-version: '1.19.3'
-
-      - name: Fetch BoringSSL source
+      - name: Fetch Tongsuo source
         uses: actions/download-artifact@v1
         with:
-          name: boringssl-source
-          path: ${{ runner.temp }}/boringssl
+          name: tongsuo-source
+          path: ${{ runner.temp }}/Tongsuo
 
-      - name: Checkout BoringSSL master branch
+      - name: Checkout Tongsuo 8.3-stable branch
         shell: bash
         run: |
-          cd "$BORINGSSL_HOME"
-          git checkout --progress --force -B master
+          cd "$TONGSUO_HOME"
+          git checkout --progress --force 8.3-stable
 
-      - name: Build BoringSSL 64-bit Linux
+      - name: Build Tongsuo 64-bit Linux
         if: runner.os == 'Linux'
+        shell: bash
         run: |
-          mkdir -p "$BORINGSSL_HOME/build64"
-          pushd "$BORINGSSL_HOME/build64"
-          cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release -GNinja ..
-          ninja
+          mkdir -p "$TONGSUO_HOME/build64"
+          pushd "$TONGSUO_HOME"
+          ./config --prefix=$TONGSUO_HOME/build64 enable-weak-ssl-ciphers
+          make -s -j4
+          make install
           popd
 
       - name: Build with Gradle
@@ -142,23 +131,23 @@ jobs:
         shell: bash
         run: |
           echo "M2_REPO=${{ runner.temp }}/m2" >> $GITHUB_ENV
-          echo "BORINGSSL_HOME=${{ runner.temp }}/boringssl" >> $GITHUB_ENV
+          echo "TONGSUO_HOME=${{ runner.temp }}/Tongsuo" >> $GITHUB_ENV
 
-      - name: Fetch BoringSSL source
+      - name: Fetch Tongsuo source
         uses: actions/download-artifact@v1
         with:
-          name: boringssl-source
-          path: ${{ runner.temp }}/boringssl
+          name: tongsuo-source
+          path: ${{ runner.temp }}/Tongsuo
 
-      - name: Make fake BoringSSL directories
+      - name: Make fake Tongsuo directories
         shell: bash
         run: |
           # TODO: remove this when the check is only performed when building.
           # BoringSSL is not needed during the UberJAR build, but the
           # assertion to check happens regardless of whether the project
           # needs it.
-          mkdir -p "${{ runner.temp }}/boringssl/build64"
-          mkdir -p "${{ runner.temp }}/boringssl/include"
+          mkdir -p "${{ runner.temp }}/Tongsuo/build64"
+          mkdir -p "${{ runner.temp }}/Tongsuo/include"
 
       - name: Download Maven repository for Linux
         uses: actions/download-artifact@v1
@@ -189,11 +178,9 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest]
-        java: [8, 9, 11]
+        java: [8, 11]
         include:
           - java: 8
-            suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
-          - java: 9
             suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"
           - java: 11
             suite_class: "org.conscrypt.Conscrypt(OpenJdk)?Suite"

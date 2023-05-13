@@ -23,7 +23,6 @@
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 #include <openssl/evp.h>
-#include <openssl/aead.h>
 
 static const char kCopyright[] =
     "/* Copyright (C) 2015 The Android Open Source Project\n"
@@ -50,11 +49,27 @@ int main(int /* argc */, char ** /* argv */) {
 #define CONST(x) \
   printf("    static final int %s = %ld;\n", #x, (long int)(x))
 
+// SSL_SIGN_* are signature algorithm values as defined in TLS 1.3.
+#define SSL_SIGN_RSA_PKCS1_SHA1 0x0201
+#define SSL_SIGN_RSA_PKCS1_SHA256 0x0401
+#define SSL_SIGN_RSA_PKCS1_SHA384 0x0501
+#define SSL_SIGN_RSA_PKCS1_SHA512 0x0601
+#define SSL_SIGN_ECDSA_SHA1 0x0203
+#define SSL_SIGN_ECDSA_SECP256R1_SHA256 0x0403
+#define SSL_SIGN_ECDSA_SECP384R1_SHA384 0x0503
+#define SSL_SIGN_ECDSA_SECP521R1_SHA512 0x0603
+#define SSL_SIGN_RSA_PSS_RSAE_SHA256 0x0804
+#define SSL_SIGN_RSA_PSS_RSAE_SHA384 0x0805
+#define SSL_SIGN_RSA_PSS_RSAE_SHA512 0x0806
+#define SSL_SIGN_ED25519 0x0807
+#define SSL_SIGN_SM2_SM3 0x0708
+
   CONST(EXFLAG_CA);
   CONST(EXFLAG_CRITICAL);
 
   CONST(EVP_PKEY_RSA);
   CONST(EVP_PKEY_EC);
+  CONST(EVP_PKEY_SM2);
 
   CONST(RSA_PKCS1_PADDING);
   CONST(RSA_NO_PADDING);
@@ -62,8 +77,6 @@ int main(int /* argc */, char ** /* argv */) {
   CONST(RSA_PKCS1_PSS_PADDING);
 
   CONST(SSL_MODE_SEND_FALLBACK_SCSV);
-  CONST(SSL_MODE_CBC_RECORD_SPLITTING);
-  CONST(SSL_MODE_ENABLE_FALSE_START);
 
   CONST(SSL_OP_CIPHER_SERVER_PREFERENCE);
   CONST(SSL_OP_NO_TICKET);
@@ -98,6 +111,7 @@ int main(int /* argc */, char ** /* argv */) {
   CONST(SSL_SIGN_RSA_PSS_RSAE_SHA384);
   CONST(SSL_SIGN_RSA_PSS_RSAE_SHA512);
   CONST(SSL_SIGN_ED25519);
+  CONST(SSL_SIGN_SM2_SM3);
 
   CONST(SSL_VERIFY_NONE);
   CONST(SSL_VERIFY_PEER);

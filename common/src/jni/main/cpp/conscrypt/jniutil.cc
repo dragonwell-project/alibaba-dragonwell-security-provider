@@ -306,34 +306,35 @@ int throwForAsn1Error(JNIEnv* env, int reason, const char* message,
     return defaultThrow(env, message);
 }
 
-int throwForCipherError(JNIEnv* env, int reason, const char* message,
-                        int (*defaultThrow)(JNIEnv*, const char*)) {
-    switch (reason) {
-        case CIPHER_R_BAD_DECRYPT:
-            return throwBadPaddingException(env, message);
-            break;
-        case CIPHER_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH:
-        case CIPHER_R_WRONG_FINAL_BLOCK_LENGTH:
-            return throwIllegalBlockSizeException(env, message);
-            break;
-        // TODO(davidben): Remove these ifdefs after
-        // https://boringssl-review.googlesource.com/c/boringssl/+/35565 has
-        // rolled out to relevant BoringSSL copies.
-#if defined(CIPHER_R_BAD_KEY_LENGTH)
-        case CIPHER_R_BAD_KEY_LENGTH:
-#endif
-#if defined(CIPHER_R_UNSUPPORTED_KEY_SIZE)
-        case CIPHER_R_UNSUPPORTED_KEY_SIZE:
-#endif
-        case CIPHER_R_INVALID_KEY_LENGTH:
-            return throwInvalidKeyException(env, message);
-            break;
-        case CIPHER_R_BUFFER_TOO_SMALL:
-            return throwShortBufferException(env, message);
-            break;
-    }
-    return defaultThrow(env, message);
-}
+// ERR_LIB_CIPHER was not defined in tongsuo, so remove this branch.
+// int throwForCipherError(JNIEnv* env, int reason, const char* message,
+//                         int (*defaultThrow)(JNIEnv*, const char*)) {
+//     switch (reason) {
+//         case CIPHER_R_BAD_DECRYPT:
+//             return throwBadPaddingException(env, message);
+//             break;
+//         case CIPHER_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH:
+//         case CIPHER_R_WRONG_FINAL_BLOCK_LENGTH:
+//             return throwIllegalBlockSizeException(env, message);
+//             break;
+//         // TODO(davidben): Remove these ifdefs after
+//         // https://boringssl-review.googlesource.com/c/boringssl/+/35565 has
+//         // rolled out to relevant BoringSSL copies.
+// #if defined(CIPHER_R_BAD_KEY_LENGTH)
+//         case CIPHER_R_BAD_KEY_LENGTH:
+// #endif
+// #if defined(CIPHER_R_UNSUPPORTED_KEY_SIZE)
+//         case CIPHER_R_UNSUPPORTED_KEY_SIZE:
+// #endif
+//         case CIPHER_R_INVALID_KEY_LENGTH:
+//             return throwInvalidKeyException(env, message);
+//             break;
+//         case CIPHER_R_BUFFER_TOO_SMALL:
+//             return throwShortBufferException(env, message);
+//             break;
+//     }
+//     return defaultThrow(env, message);
+// }
 
 int throwForEvpError(JNIEnv* env, int reason, const char* message,
                      int (*defaultThrow)(JNIEnv*, const char*)) {
@@ -421,9 +422,10 @@ void throwExceptionFromBoringSSLError(JNIEnv* env, CONSCRYPT_UNUSED const char* 
             case ERR_LIB_ASN1:
                 throwForAsn1Error(env, reason, message, defaultThrow);
                 break;
-            case ERR_LIB_CIPHER:
-                throwForCipherError(env, reason, message, defaultThrow);
-                break;
+            // ERR_LIB_CIPHER was not defined in tongsuo, so remove this branch.
+            // case ERR_LIB_CIPHER:
+            //     throwForCipherError(env, reason, message, defaultThrow);
+            //     break;
             case ERR_LIB_EVP:
                 throwForEvpError(env, reason, message, defaultThrow);
                 break;

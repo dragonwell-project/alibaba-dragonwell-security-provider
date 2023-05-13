@@ -27,7 +27,7 @@ model {
                 cpp {
                     // Sources assumed to be in src/gen/cpp by default.
                     exportedHeaders {
-                        srcDirs "${boringsslIncludeDir}"
+                        srcDirs "${tongsuoIncludeDir}"
                         include "**/*.cc"
                     }
                 }

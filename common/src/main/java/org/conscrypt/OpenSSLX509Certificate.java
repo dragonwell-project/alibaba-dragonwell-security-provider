@@ -482,6 +482,17 @@ public final class OpenSSLX509Certificate extends X509Certificate {
             // Ignored
         }
 
+        try {
+            OpenSSLKey pkey = new OpenSSLKey(NativeCrypto.X509_get_pubkey(mContext, this));
+            final int pkeyType = NativeCrypto.EVP_PKEY_type(pkey.getNativeRef());
+
+            if (pkeyType == NativeConstants.EVP_PKEY_SM2) {
+                oid = "SM2";
+            }
+        } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
+            // Ignored
+        }
+
         /*
          * We couldn't find anything else, so just return a nearly-unusable
          * X.509-encoded key.

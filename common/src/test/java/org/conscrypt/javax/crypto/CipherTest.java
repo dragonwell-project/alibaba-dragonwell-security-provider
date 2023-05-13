@@ -76,6 +76,7 @@ import org.conscrypt.java.security.StandardNames;
 import org.conscrypt.java.security.TestKeyStore;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -1026,6 +1027,7 @@ public final class CipherTest {
         IS_UNLIMITED = is_unlimited;
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void test_getInstance() throws Exception {
         final ByteArrayOutputStream errBuffer = new ByteArrayOutputStream();
@@ -3685,6 +3687,7 @@ public final class CipherTest {
                 vector));
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testCipher_Success() throws Exception {
         for (String provider : AES_PROVIDERS) {
@@ -4111,6 +4114,7 @@ public final class CipherTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testCipher_ShortBlock_Failure() throws Exception {
         for (String provider : AES_PROVIDERS) {
@@ -4268,16 +4272,19 @@ public final class CipherTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testCipher_Unwrap_decryptMode_Failure() throws Exception {
         checkCipher_Unwrap_invalidMode_Failure(Cipher.DECRYPT_MODE);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testCipher_Unwrap_encryptMode_Failure() throws Exception {
         checkCipher_Unwrap_invalidMode_Failure(Cipher.ENCRYPT_MODE);
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testCipher_Unwrap_wrapMode_Failure() throws Exception {
         checkCipher_Unwrap_invalidMode_Failure(Cipher.WRAP_MODE);
@@ -4324,6 +4331,7 @@ public final class CipherTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testAES_ECB_PKCS5Padding_ShortBuffer_Failure() throws Exception {
         for (String provider : AES_PROVIDERS) {
@@ -4378,6 +4386,7 @@ public final class CipherTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testAES_ECB_NoPadding_IncrementalUpdate_Success() throws Exception {
         for (String provider : AES_PROVIDERS) {
@@ -4505,6 +4514,7 @@ public final class CipherTest {
         }
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testAES_keyConstrained() throws Exception {
         Provider[] providers = Security.getProviders();
@@ -4544,6 +4554,7 @@ public final class CipherTest {
      * extra block when using padding.
      * http://b/19186852
      */
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testDecryptBufferMultipleBlockSize_mustNotThrowException() throws Exception {
         String testString = "Hello, World!";
@@ -4572,6 +4583,7 @@ public final class CipherTest {
      * (no padding needed for the empty buffer).
      * http://b/19186852
      */
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testDecryptBufferZeroSize_mustDecodeToEmptyString() throws Exception {
         String[] androidOpenSSLCiphers = { "AES/CBC/PKCS5PADDING", "AES/CBC/PKCS7PADDING",

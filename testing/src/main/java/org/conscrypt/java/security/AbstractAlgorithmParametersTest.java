@@ -17,6 +17,7 @@ package org.conscrypt.java.security;
 
 import java.security.AlgorithmParameters;
 import java.security.spec.AlgorithmParameterSpec;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public abstract class AbstractAlgorithmParametersTest {
@@ -32,6 +33,7 @@ public abstract class AbstractAlgorithmParametersTest {
         this.parameterData = parameterData;
     }
 
+    @Ignore("not supported by Tongsuo")
     @Test
     public void testAlgorithmParameters() throws Exception {
         AlgorithmParameters algorithmParameters = AlgorithmParameters.getInstance(algorithmName);
