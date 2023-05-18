@@ -20,7 +20,12 @@ description = 'Conscrypt: OpenJdk'
 // This class encapsulates both naming schemes as well as other per-platform information
 // about native builds, more of which will migrate in here over time.
 enum NativeBuildInfo {
-    LINUX_X86_64("linux", "x86_64");
+    LINUX_X86_64("linux", "x86_64"),
+    MAC_X86_64("osx", "x86_64") {
+        String libDir() {
+            "build.x86"
+        }
+    },
 
     static String buildDir = "FIXME" // See below
 
@@ -405,6 +410,7 @@ model {
                                 "-I$tongsuoIncludeDir",
                                 "-I$jdkIncludeDir",
                                 "-I$jdkIncludeDir/linux",
+                                "-I$jdkIncludeDir/darwin",
                                 "-Wno-deprecated-declarations"
                         if (rootProject.hasProperty('checkErrorQueue')) {
                             System.out.println("Compiling with error queue checking enabled")
