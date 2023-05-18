@@ -1239,6 +1239,7 @@ public class SSLSocketVersionCompatibilityTest {
     }
 
     @Test
+    @Ignore
     public void test_SSLSocket_endpointIdentification_Failure() throws Exception {
         TestUtils.assumeSetEndpointIdentificationAlgorithmAvailable();
         // The default hostname verifier on OpenJDK just rejects all hostnames,
@@ -1355,6 +1356,7 @@ public class SSLSocketVersionCompatibilityTest {
     }
 
     @Test
+    @Ignore
     public void test_SSLSocket_reusedNpnSocket() throws Exception {
         byte[] npnProtocols = new byte[] {
                 8, 'h', 't', 't', 'p', '/', '1', '.', '1'

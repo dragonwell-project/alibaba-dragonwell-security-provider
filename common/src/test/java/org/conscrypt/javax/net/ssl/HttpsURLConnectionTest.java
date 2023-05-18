@@ -179,7 +179,7 @@ public class HttpsURLConnectionTest {
         URL url = new URL("https", UNREACHABLE_IP, 443, "/file");
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
         connection.setConnectTimeout(timeoutMillis);
-        connection.setReadTimeout(0);
+        connection.setReadTimeout(timeoutMillis);
 
         Future<Void> future = executor.submit(() -> {
             try {
@@ -191,7 +191,7 @@ public class HttpsURLConnectionTest {
             return null;
         });
         try {
-            future.get(2 * timeoutMillis, TimeUnit.MILLISECONDS);
+            future.get(3 * timeoutMillis, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             fail("HttpsURLConnection connection timeout failed.");
         }

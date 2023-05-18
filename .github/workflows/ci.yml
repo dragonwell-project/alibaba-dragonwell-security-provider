@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -72,6 +72,19 @@ jobs:
         run: |
           cd "$TONGSUO_HOME"
           git checkout --progress --force 8.3-stable
+
+      - name: Build Tongsuo x86-64 MacOS
+        if: runner.os == 'macOS'
+        env:
+          # For compatibility, but 10.15 target requires 16-byte stack alignment.
+          MACOSX_DEPLOYMENT_TARGET: 10.11
+        run: |
+          mkdir -p "$TONGSUO_HOME/build.x86"
+          pushd "$TONGSUO_HOME"
+          ./config --prefix=$TONGSUO_HOME/build.x86 enable-weak-ssl-ciphers
+          make -s -j4
+          make install
+          popd
 
       - name: Build Tongsuo 64-bit Linux
         if: runner.os == 'Linux'
@@ -155,6 +168,12 @@ jobs:
           name: m2repo-Linux
           path: ${{ runner.temp }}/m2
 
+      - name: Download Maven repository for MacOS
+        uses: actions/download-artifact@v1
+        with:
+          name: m2repo-macOS
+          path: ${{ runner.temp }}/m2
+
       - name: Build UberJAR with Gradle
         shell: bash
         run: |
@@ -177,7 +196,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest, macos-latest]
         java: [8, 11]
         include:
           - java: 8
