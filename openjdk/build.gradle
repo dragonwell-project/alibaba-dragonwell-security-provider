@@ -21,11 +21,9 @@ description = 'Conscrypt: OpenJdk'
 // about native builds, more of which will migrate in here over time.
 enum NativeBuildInfo {
     LINUX_X86_64("linux", "x86_64"),
-    MAC_X86_64("osx", "x86_64") {
-        String libDir() {
-            "build.x86"
-        }
-    },
+    LINUX_AARCH64("linux", "aarch_64"),
+    MAC_X86_64("osx", "x86_64"),
+    MAC_AARCH64("osx", "aarch_64");
 
     static String buildDir = "FIXME" // See below
 
@@ -35,6 +33,7 @@ enum NativeBuildInfo {
     // Maps osdetector arch to Gradle equivalent.
     private static final gradleArchMap = [
             "x86_64" : "x86-64",
+            "aarch_64": "aarch64",
     ]
 
     NativeBuildInfo(String os, String arch) {
@@ -68,7 +67,13 @@ enum NativeBuildInfo {
     }
 
     String libDir() {
-        "build64"
+        if (this.gradleArch() == "aarch64") {
+            return "build.arm64"
+        } else if (this.gradleArch() == "x86-64") {
+            return "build.x64"
+        } else {
+            return "";
+        }
     }
 
     static String gradleArch(String arch) {
@@ -100,6 +105,14 @@ enum NativeBuildInfo {
             it.os == os
         }
     }
+
+    // Add findAll method for specific platform and arch.
+    // We will not adopt cross-compile.
+    static findAll(String os, String arch) {
+        values().findAll {
+            it.os == os && it.arch == arch
+        }
+    }
 }
 
 // TODO: There has to be a better way of accessing Gradle properties from Groovy code than this
@@ -110,7 +123,7 @@ ext {
     assert file("$jniSourceDir").exists()
 
     // Decide which targets we should build and test
-    nativeBuilds = NativeBuildInfo.findAll("${osdetector.os}")
+    nativeBuilds = NativeBuildInfo.findAll("${osdetector.os}", "${osdetector.arch}")
     buildToTest = NativeBuildInfo.find("${osdetector.os}", "${osdetector.arch}")
 
     assert !nativeBuilds.isEmpty() : "No native builds selected."
