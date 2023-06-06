@@ -464,32 +464,26 @@ public final class OpenSSLX509Certificate extends X509Certificate {
 
     @Override
     public PublicKey getPublicKey() {
+        String oid = NativeCrypto.get_X509_pubkey_oid(mContext, this);
+        byte[] encoded = NativeCrypto.i2d_X509_PUBKEY(mContext, this);
         /* First try to generate the key from supported OpenSSL key types. */
         try {
             OpenSSLKey pkey = new OpenSSLKey(NativeCrypto.X509_get_pubkey(mContext, this));
+            final int pkeyType = NativeCrypto.EVP_PKEY_type(pkey.getNativeRef());
+            if (pkeyType == NativeConstants.EVP_PKEY_SM2) {
+                oid = "SM2";
+                return new X509PublicKey(oid, encoded);
+            }
             return pkey.getPublicKey();
         } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
             // Ignored
         }
 
         /* Try generating the key using other Java providers. */
-        String oid = NativeCrypto.get_X509_pubkey_oid(mContext, this);
-        byte[] encoded = NativeCrypto.i2d_X509_PUBKEY(mContext, this);
         try {
             KeyFactory kf = KeyFactory.getInstance(oid);
             return kf.generatePublic(new X509EncodedKeySpec(encoded));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException ignored) {
-            // Ignored
-        }
-
-        try {
-            OpenSSLKey pkey = new OpenSSLKey(NativeCrypto.X509_get_pubkey(mContext, this));
-            final int pkeyType = NativeCrypto.EVP_PKEY_type(pkey.getNativeRef());
-
-            if (pkeyType == NativeConstants.EVP_PKEY_SM2) {
-                oid = "SM2";
-            }
-        } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
             // Ignored
         }
 
