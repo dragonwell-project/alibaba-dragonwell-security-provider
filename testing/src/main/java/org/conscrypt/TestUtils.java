@@ -16,6 +16,8 @@
 
 package org.conscrypt;
 
+import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -260,6 +262,27 @@ public final class TestUtils {
             throw new FileNotFoundException(name);
         }
         return is;
+    }
+
+    public static PrivateKey readSM2PrivateKeyPemFile(String name)throws Exception{
+        InputStream inputStream = openTestFile(name);
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+            while ((line = bufferedReader.readLine()) != null){
+            if(line.startsWith("-")){
+                continue;
+            }
+            sb.append(line).append("\n");
+        }
+        String ecKey = sb.toString().replaceAll("\\r\\n|\\r|\\n", "");
+        Base64.Decoder base64Decoder = Base64.getDecoder();
+        byte[] keyByte = base64Decoder.decode(ecKey.getBytes(StandardCharsets.UTF_8));
+        PKCS8EncodedKeySpec eks2 = new PKCS8EncodedKeySpec(keyByte);
+        KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
+        PrivateKey privateKey = keyFactory.generatePrivate(eks2);
+            return privateKey;
     }
 
     public static byte[] readTestFile(String name) throws IOException {

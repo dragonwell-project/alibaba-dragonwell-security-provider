@@ -208,12 +208,19 @@ final class SSLUtils {
         return OpenSSLX509Certificate.fromX509Der(bytes);
     }
 
+
+
     /**
      * Returns key type constant suitable for calling X509KeyManager.chooseServerAlias or
      * X509ExtendedKeyManager.chooseEngineServerAlias. Returns {@code null} for key exchanges that
      * do not use X.509 for server authentication.
      */
     static String getServerX509KeyType(long sslCipherNative) {
+        String name = NativeCrypto.SSL_CIPHER_get_name(sslCipherNative);
+        if (name.equals("TLS_SM4_GCM_SM3") || name.equals("TLS_SM4_CCM_SM3")) {
+            return KEY_TYPE_SM2;
+        }
+
         String kx_name = NativeCrypto.SSL_CIPHER_get_kx_name(sslCipherNative);
         if (kx_name.equals("RSA") || kx_name.equals("DHE_RSA") || kx_name.equals("ECDHE_RSA")) {
             return KEY_TYPE_RSA;
