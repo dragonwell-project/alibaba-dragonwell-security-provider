@@ -107,8 +107,9 @@ import org.junit.runners.Suite;
         // javax.crypto tests
         AeadCipherTest.class,
         CipherBasicsTest.class,
-        // CipherTest.class,  // Lots of weird, broken behaviors in Sun* providers on OpenJDK 7
-        // ECDHKeyAgreementTest.class,  // EC keys are broken on OpenJDK 7
+        // CipherTest.class, // Lots of weird, broken behaviors in Sun* providers on
+        // OpenJDK 7
+        // ECDHKeyAgreementTest.class, // EC keys are broken on OpenJDK 7
         KeyGeneratorTest.class,
         // javax.net.ssl tests
         HttpsURLConnectionTest.class,

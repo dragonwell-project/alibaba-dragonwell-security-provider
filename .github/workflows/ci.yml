@@ -64,7 +64,7 @@ jobs:
         run: |
           mkdir -p "$TONGSUO_HOME"
           cd "$TONGSUO_HOME"
-          git clone -b 8.3.2 https://github.com/Tongsuo-Project/Tongsuo.git "./"
+          for i in {1..10}; do git clone -b 8.3.2 https://github.com/Tongsuo-Project/Tongsuo.git "./" && break || sleep 5; done
 
       - name: Build Tongsuo x86-64 MacOS
         if: runner.os == 'macOS' && runner.arch == 'X64'
@@ -77,9 +77,18 @@ jobs:
           ./config --prefix=$TONGSUO_HOME/build.x64 enable-weak-ssl-ciphers
           make -s -j4
           make install
+          tar -zcvf build.x64.tgz build.x64
           popd
 
-      - name: Build Tongsuo arm64 MacOS
+      - name: Upload macOS-X64 Tongsuo lib and bin
+        if: runner.os == 'macOS' && runner.arch == 'X64'
+        uses: actions/upload-artifact@v2
+        with:
+          name: tongsuo_osx_x64_bin.tgz
+          path: ${{ runner.temp }}/Tongsuo/build.x64.tgz
+          if-no-files-found: error
+
+      - name: Build Tongsuo MacOS arm64
         if: runner.os == 'macOS' && runner.arch == 'ARM64'
         env:
           # For compatibility, but 10.15 target requires 16-byte stack alignment.
@@ -90,7 +99,16 @@ jobs:
           ./config --prefix=$TONGSUO_HOME/build.arm64 enable-weak-ssl-ciphers
           make -s -j4
           make install
+          tar -zcvf build.arm64.tgz build.arm64
           popd
+
+      - name: Upload macOS-ARM64 Tongsuo bin
+        if: runner.os == 'macOS' && runner.arch == 'ARM64'
+        uses: actions/upload-artifact@v2
+        with:
+          name: tongsuo_osx_arm64_bin.tgz
+          path: ${{ runner.temp }}/Tongsuo/build.arm64.tgz
+          if-no-files-found: error
 
       - name: Build Tongsuo x86_64 Linux
         if: runner.os == 'Linux' && runner.arch == 'X64'
@@ -101,7 +119,16 @@ jobs:
           ./config --prefix=$TONGSUO_HOME/build.x64 enable-weak-ssl-ciphers
           make -s -j4
           make install
+          tar -zcvf build.x64.tgz build.x64
           popd
+
+      - name: Upload Linux-X64 Tongsuo bin
+        if: runner.os == 'Linux' && runner.arch == 'X64'
+        uses: actions/upload-artifact@v2
+        with:
+          name: tongsuo_linux_x64_bin.tgz
+          path: ${{ runner.temp }}/Tongsuo/build.x64.tgz
+          if-no-files-found: error
 
       - name: Build Tongsuo arm64 Linux
         if: runner.os == 'Linux' && runner.arch == 'ARM64'
@@ -112,7 +139,16 @@ jobs:
           ./config --prefix=$TONGSUO_HOME/build.arm64 enable-weak-ssl-ciphers
           make -s -j4
           make install
+          tar -zcvf build.arm64.tgz build.arm64
           popd
+
+      - name: Upload Linux-ARM64 Tongsuo bin
+        if: runner.os == 'Linux' && runner.arch == 'ARM64'
+        uses: actions/upload-artifact@v2
+        with:
+          name: tongsuo_linux_arm64_bin.tgz
+          path: ${{ runner.temp }}/Tongsuo/build.arm64.tgz
+          if-no-files-found: error
 
       - name: Build with Gradle
         shell: bash
@@ -194,7 +230,7 @@ jobs:
         run: |
           mkdir -p "$TONGSUO_HOME"
           cd "$TONGSUO_HOME"
-          git clone -b 8.3.2 https://github.com/Tongsuo-Project/Tongsuo.git "./"
+          for i in {1..10}; do git clone -b 8.3.2 https://github.com/Tongsuo-Project/Tongsuo.git "./" && break || sleep 5; done
 
       - name: Build UberJAR with Gradle
         shell: bash
@@ -235,6 +271,64 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: 'zulu'
 
+      - name: Set runner-specific environment variables
+        shell: bash
+        run: |
+          echo "TONGSUO_HOME=${{ runner.temp }}/Tongsuo" >> $GITHUB_ENV
+          mkdir -p "${{ runner.temp }}/Tongsuo"
+
+      - name: Download Maven repository for macOS X64
+        if: runner.os == 'macOS' && runner.arch == 'X64'
+        uses: actions/download-artifact@v2
+        with:
+          name: tongsuo_osx_x64_bin.tgz
+          path: ${{ runner.temp }}/Tongsuo
+
+      - name: Uncompress files
+        if: runner.os == 'macOS' && runner.arch == 'X64'
+        run: |
+          tar -xzvf ${{ runner.temp }}/Tongsuo/build.x64.tgz -C ${{ runner.temp }}/Tongsuo
+          DYLD_LIBRARY_PATH=${{ runner.temp }}/Tongsuo/build.x64/lib ${{ runner.temp }}/Tongsuo/build.x64/bin/openssl version
+
+      - name: Download Maven repository for macOS arm64
+        if: runner.os == 'macOS' && runner.arch == 'ARM64'
+        uses: actions/download-artifact@v2
+        with:
+          name: tongsuo_osx_arm64_bin.tgz
+          path: ${{ runner.temp }}/Tongsuo
+
+      - name: Uncompress files
+        if: runner.os == 'macOS' && runner.arch == 'ARM64'
+        run: |
+          tar -xzvf ${{ runner.temp }}/Tongsuo/build.arm64.tgz -C ${{ runner.temp }}/Tongsuo
+          DYLD_LIBRARY_PATH=${{ runner.temp }}/Tongsuo/build.arm64/lib ${{ runner.temp }}/Tongsuo/build.arm64/bin/openssl version
+
+      - name: Download Maven repository for Linux X64
+        if: runner.os == 'Linux' && runner.arch == 'X64'
+        uses: actions/download-artifact@v2
+        with:
+          name: tongsuo_linux_x64_bin.tgz
+          path: ${{ runner.temp }}/Tongsuo
+
+      - name: Uncompress files
+        if: runner.os == 'Linux' && runner.arch == 'X64'
+        run: |
+          tar -xzvf ${{ runner.temp }}/Tongsuo/build.x64.tgz -C ${{ runner.temp }}/Tongsuo && ls ${{ runner.temp }}/Tongsuo
+          LD_LIBRARY_PATH=${{ runner.temp }}/Tongsuo/build.x64/lib ${{ runner.temp }}/Tongsuo/build.x64/bin/openssl version
+
+      - name: Download Maven repository for Linux ARM64
+        if: runner.os == 'Linux' && runner.arch == 'ARM64'
+        uses: actions/download-artifact@v2
+        with:
+          name: tongsuo_linux_arm64_bin.tgz
+          path: ${{ runner.temp }}/Tongsuo
+
+      - name: Uncompress files
+        if: runner.os == 'Linux' && runner.arch == 'ARM64'
+        run: |
+          tar -xzvf ${{ runner.temp }}/Tongsuo/build.arm64.tgz -C ${{ runner.temp }}/Tongsuo && ls ${{ runner.temp }}/Tongsuo
+          LD_LIBRARY_PATH=${{ runner.temp }}/Tongsuo/build.arm64/lib ${{ runner.temp }}/Tongsuo/build.arm64/bin/openssl version
+
       - name: Download UberJAR
         uses: actions/download-artifact@v2
         with:
@@ -252,12 +346,36 @@ jobs:
         run: mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.2:copy -Dartifact=org.junit.platform:junit-platform-console-standalone:1.6.2 -DoutputDirectory=. -Dmdep.stripVersion=true
 
       - name: Run JUnit tests
+        if: runner.arch == 'X64'
         shell: bash
         run: |
           DIR="$(find m2/org/conscrypt/conscrypt-openjdk-uber -maxdepth 1 -mindepth 1 -type d -print)"
           VERSION="${DIR##*/}"
           TESTJAR="$(find testjar -name '*-tests.jar')"
-          java -jar junit-platform-console-standalone.jar -cp "$DIR/conscrypt-openjdk-uber-$VERSION.jar:$TESTJAR" -n='${{ matrix.suite_class }}' --scan-classpath --reports-dir=results --fail-if-no-tests
+          zip -d $TESTJAR 'META-INF/*.SF' 'META-INF/*.RSA' 'META-INF/*.DSA'
+          CLASS_PATH="$DIR/conscrypt-openjdk-uber-$VERSION.jar:$TESTJAR"
+          PROPERTY0="-Dtest.babassl.path=${{ runner.temp }}/Tongsuo/build.x64/bin/openssl"
+          PROPERTY1="-Dtest.openssl.path=${{ runner.temp }}/Tongsuo/build.x64/bin/openssl"
+          PROPERTY2="-Dtest.babassl.lib.path=${{ runner.temp }}/Tongsuo/build.x64/lib"
+          PROPERTY3="-Dtest.openssl.lib.path=${{ runner.temp }}/Tongsuo/build.x64/lib"
+          PROPERTY4="-Dtest.classpath=$CLASS_PATH"
+          java $PROPERTY0 $PROPERTY1 $PROPERTY2 $PROPERTY3 $PROPERTY4 -jar junit-platform-console-standalone.jar -cp $CLASS_PATH -n='${{ matrix.suite_class }}' --scan-classpath --reports-dir=results --fail-if-no-tests
+
+      - name: Run JUnit tests
+        if: runner.arch == 'ARM64'
+        shell: bash
+        run: |
+          DIR="$(find m2/org/conscrypt/conscrypt-openjdk-uber -maxdepth 1 -mindepth 1 -type d -print)"
+          VERSION="${DIR##*/}"
+          TESTJAR="$(find testjar -name '*-tests.jar')"
+          zip -d $TESTJAR 'META-INF/*.SF' 'META-INF/*.RSA' 'META-INF/*.DSA'
+          CLASS_PATH="$DIR/conscrypt-openjdk-uber-$VERSION.jar:$TESTJAR"
+          PROPERTY0="-Dtest.babassl.path=${{ runner.temp }}/Tongsuo/build.arm64/bin/openssl"
+          PROPERTY1="-Dtest.openssl.path=${{ runner.temp }}/Tongsuo/build.arm64/bin/openssl"
+          PROPERTY2="-Dtest.babassl.lib.path=${{ runner.temp }}/Tongsuo/build.arm64/lib"
+          PROPERTY3="-Dtest.openssl.lib.path=${{ runner.temp }}/Tongsuo/build.arm64/lib"
+          PROPERTY4="-Dtest.classpath=$CLASS_PATH"
+          java $PROPERTY0 $PROPERTY1 $PROPERTY2 $PROPERTY3 $PROPERTY4 -jar junit-platform-console-standalone.jar -cp $CLASS_PATH -n='${{ matrix.suite_class }}' --scan-classpath --reports-dir=results --fail-if-no-tests
 
       - name: Archive test results
         if: ${{ always() }}

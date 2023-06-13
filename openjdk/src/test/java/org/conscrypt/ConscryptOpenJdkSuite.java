@@ -2,6 +2,14 @@ package org.conscrypt;
 
 import static org.conscrypt.TestUtils.installConscryptAsDefaultProvider;
 
+import org.conscrypt.net.ssl.BabaSSLServerJdkClientTest;
+import org.conscrypt.net.ssl.JdkDragonServerBaBaSSLClientTest;
+import org.conscrypt.net.ssl.JdkDragonServerJdkClientTest;
+import org.conscrypt.net.ssl.JdkDragonServerJdkDragonClientTest;
+import org.conscrypt.net.ssl.JdkServerBabaSSLClientTest;
+import org.conscrypt.net.ssl.JdkServerJdkClientTest;
+import org.conscrypt.net.ssl.JdkServerJdkDragonClientTest;
+import org.conscrypt.net.ssl.BaBaSSLServerJdkDragonClientTest;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -25,6 +33,14 @@ import org.junit.runners.Suite;
     SSLUtilsTest.class,
     TestSessionBuilderTest.class,
     TestTLSWithJetty.class,
+    // BabaSSLServerJdkClientTest.class,
+    // JdkServerBabaSSLClientTest.class,
+    // JdkServerJdkClientTest.class,
+    BaBaSSLServerJdkDragonClientTest.class,
+    JdkDragonServerBaBaSSLClientTest.class,
+    JdkDragonServerJdkDragonClientTest.class,
+    JdkDragonServerJdkClientTest.class,
+    JdkServerJdkDragonClientTest.class,
 })
 public class ConscryptOpenJdkSuite {
 

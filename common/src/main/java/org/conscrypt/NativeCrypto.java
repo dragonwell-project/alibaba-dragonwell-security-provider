@@ -745,7 +745,8 @@ public final class NativeCrypto {
     append(":ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384").
     append(":ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305").
     append(":PSK-AES128-CBC-SHA:PSK-AES256-CBC-SHA:ECDHE-PSK-AES128-CBC-SHA").
-    append(":ECDHE-PSK-AES256-CBC-SHA:ECDHE-PSK-CHACHA20-POLY1305").toString();
+    append(":ECDHE-PSK-AES256-CBC-SHA:ECDHE-PSK-CHACHA20-POLY1305").
+    append(":ECDHE-ECDSA-AES128-SHA256").toString();
 
     static final String[] SUPPORTED_TLS_1_3_CIPHER_SUITES = new String[] {
             "TLS_AES_128_GCM_SHA256",
@@ -884,6 +885,7 @@ public final class NativeCrypto {
                     "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
                     "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
                     "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+                    "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
                     "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
                     "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
                     "TLS_RSA_WITH_AES_128_GCM_SHA256",
@@ -900,6 +902,7 @@ public final class NativeCrypto {
                     "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
                     "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
                     "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+                    "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
                     "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
                     "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
                     "TLS_RSA_WITH_AES_128_GCM_SHA256",
