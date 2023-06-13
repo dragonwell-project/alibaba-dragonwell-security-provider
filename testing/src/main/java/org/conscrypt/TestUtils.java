@@ -23,10 +23,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -36,6 +39,9 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -75,15 +81,20 @@ public final class TestUtils {
     private static final String PROTOCOL_TLS_V1_2 = "TLSv1.2";
     private static final String PROTOCOL_TLS_V1_1 = "TLSv1.1";
     private static final String PROTOCOL_TLS_V1 = "TLSv1";
-    private static final String[] DESIRED_PROTOCOLS =
-        new String[] {PROTOCOL_TLS_V1_2, PROTOCOL_TLS_V1_1, PROTOCOL_TLS_V1};
+    private static final String[] DESIRED_PROTOCOLS = new String[] { PROTOCOL_TLS_V1_2, PROTOCOL_TLS_V1_1,
+            PROTOCOL_TLS_V1 };
     private static final Provider JDK_PROVIDER = getNonConscryptTlsProvider();
-    private static final byte[] CHARS =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".getBytes(UTF_8);
+    private static final byte[] CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            .getBytes(UTF_8);
     private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.allocateDirect(0);
     private static final String[] PROTOCOLS = getProtocolsInternal();
 
     static final String TEST_CIPHER = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";
+
+    private static final String BEGIN = "-----BEGIN";
+    private static final String END = "-----END";
+
+    private static final Path TEST_RES_PATH = Paths.get("src/test/resources");
 
     public enum BufferType {
         HEAP {
@@ -98,7 +109,9 @@ public final class TestUtils {
                 return ByteBuffer.allocateDirect(size);
             }
         };
+
         private static final Random random = new Random(System.currentTimeMillis());
+
         abstract ByteBuffer newBuffer(int size);
 
         public ByteBuffer[] newRandomBuffers(int... sizes) {
@@ -120,7 +133,8 @@ public final class TestUtils {
         }
     }
 
-    private TestUtils() {}
+    private TestUtils() {
+    }
 
     private static Provider getNonConscryptTlsProvider() {
         for (String protocol : DESIRED_PROTOCOLS) {
@@ -233,10 +247,10 @@ public final class TestUtils {
     public static Provider getConscryptProvider() {
         try {
             String defaultName = (String) conscryptClass("Platform")
-                .getDeclaredMethod("getDefaultProviderName")
-                .invoke(null);
+                    .getDeclaredMethod("getDefaultProviderName")
+                    .invoke(null);
             Constructor<?> c = conscryptClass("OpenSSLProvider")
-                .getDeclaredConstructor(String.class, Boolean.TYPE, String.class);
+                    .getDeclaredConstructor(String.class, Boolean.TYPE, String.class);
 
             if (!isClassAvailable("javax.net.ssl.X509ExtendedTrustManager")) {
                 return (Provider) c.newInstance(defaultName, false, "TLSv1.3");
@@ -264,14 +278,26 @@ public final class TestUtils {
         return is;
     }
 
-    public static PrivateKey readSM2PrivateKeyPemFile(String name)throws Exception{
+    private static List<String> readCertFormResource(String path) throws Exception {
+        InputStream inputStream = openTestFile(path);
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        List<String> content = new ArrayList<>();
+        String line = null;
+        while ((line = bufferedReader.readLine()) != null) {
+            content.add(line);
+        }
+        return content;
+    }
+
+    public static PrivateKey readSM2PrivateKeyPemFile(String name) throws Exception {
         InputStream inputStream = openTestFile(name);
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
         StringBuilder sb = new StringBuilder();
         String line = null;
-            while ((line = bufferedReader.readLine()) != null){
-            if(line.startsWith("-")){
+        while ((line = bufferedReader.readLine()) != null) {
+            if (line.startsWith("-")) {
                 continue;
             }
             sb.append(line).append("\n");
@@ -282,7 +308,7 @@ public final class TestUtils {
         PKCS8EncodedKeySpec eks2 = new PKCS8EncodedKeySpec(keyByte);
         KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
         PrivateKey privateKey = keyFactory.generatePrivate(eks2);
-            return privateKey;
+        return privateKey;
     }
 
     public static byte[] readTestFile(String name) throws IOException {
@@ -300,11 +326,82 @@ public final class TestUtils {
                 new X509EncodedKeySpec(decodeBase64(keyData)));
     }
 
+    public static String certStr(String certDirName, String certFileName) {
+        try {
+            return filterPem(readCertFormResource(certDirName + "/" + certFileName), true);
+        } catch (Exception e) {
+            throw new RuntimeException("Read file failed", e);
+        }
+    }
+
+    public static String keyStr(String certDirName, String keyFileName) {
+        try {
+            return filterPem(readCertFormResource(certDirName + "/" + keyFileName), false);
+        } catch (Exception e) {
+            throw new RuntimeException("Read file failed", e);
+        }
+    }
+
+    public static Path extractLibrary(String certDirName, String certFileName) throws IOException {
+        File file = File.createTempFile(certDirName, certFileName);
+        try (InputStream in = openTestFile(certDirName + File.separator + certFileName);
+             OutputStream out = new FileOutputStream(file)) {
+            byte[] buf = new byte[4096];
+            int length;
+            while ((length = in.read(buf)) > 0) {
+                out.write(buf, 0, length);
+            }
+        } finally {
+            file.deleteOnExit();
+        }
+        return file.toPath();
+    }
+
+    public static Path resFilePath(String resource) {
+        return TEST_RES_PATH.resolve(resource);
+    }
+
+    public static Path certFilePath(String certDirName, String file) {
+        try {
+            return extractLibrary(certDirName, file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static String filterPem(List<String> lines, boolean keepSeparator) {
+        StringBuilder result = new StringBuilder();
+
+        boolean begin = false;
+        for (String line : lines) {
+            if (line.startsWith(END)) {
+                if (keepSeparator) {
+                    result.append(line);
+                }
+                break;
+            }
+
+            if (line.startsWith(BEGIN)) {
+                begin = true;
+                if (keepSeparator) {
+                    result.append(line).append("\n");
+                }
+                continue;
+            }
+
+            if (begin) {
+                result.append(line).append("\n");
+            }
+        }
+
+        return result.toString();
+    }
+
     public static List<String[]> readCsvResource(String resourceName) throws IOException {
         InputStream stream = openTestFile(resourceName);
         List<String[]> lines = new ArrayList<>();
-        try (BufferedReader reader
-                     = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isEmpty() || line.startsWith("#")) {
@@ -317,11 +414,12 @@ public final class TestUtils {
     }
 
     /**
-     * Looks up the conscrypt class for the given simple name (i.e. no package prefix).
+     * Looks up the conscrypt class for the given simple name (i.e. no package
+     * prefix).
      */
     public static Class<?> conscryptClass(String simpleName) throws ClassNotFoundException {
         ClassNotFoundException ex = null;
-        for (String packageName : new String[] {"org.conscrypt", "com.android.org.conscrypt"}) {
+        for (String packageName : new String[] { "org.conscrypt", "com.android.org.conscrypt" }) {
             String name = packageName + "." + simpleName;
             try {
                 return Class.forName(name);
@@ -353,8 +451,7 @@ public final class TestUtils {
             SSLSocketFactory conscryptFactory, boolean useEngineSocket) {
         try {
             Class<?> clazz = conscryptClass("Conscrypt");
-            Method method =
-                    clazz.getMethod("setUseEngineSocket", SSLSocketFactory.class, boolean.class);
+            Method method = clazz.getMethod("setUseEngineSocket", SSLSocketFactory.class, boolean.class);
             method.invoke(null, conscryptFactory, useEngineSocket);
             return conscryptFactory;
         } catch (Exception e) {
@@ -378,12 +475,12 @@ public final class TestUtils {
     static boolean getUseEngineSocketByDefault() {
         try {
             boolean sfDefault = getBooleanField(
-                "OpenSSLSocketFactoryImpl", "useEngineSocketByDefault");
+                    "OpenSSLSocketFactoryImpl", "useEngineSocketByDefault");
             boolean ssfDefault = getBooleanField(
-                "OpenSSLServerSocketFactoryImpl", "useEngineSocketByDefault");
+                    "OpenSSLServerSocketFactoryImpl", "useEngineSocketByDefault");
             if (sfDefault != ssfDefault) {
                 throw new IllegalStateException("Socket factory and server socket factory must\n" +
-                    "use the same default implementation during testing");
+                        "use the same default implementation during testing");
             }
             return sfDefault;
         } catch (Exception e) {
@@ -417,8 +514,7 @@ public final class TestUtils {
     }
 
     static String[] getCommonCipherSuites() {
-        SSLContext jdkContext =
-                TestUtils.initSslContext(newContext(getJdkProvider()), TestKeyStore.getClient());
+        SSLContext jdkContext = TestUtils.initSslContext(newContext(getJdkProvider()), TestKeyStore.getClient());
         SSLContext conscryptContext = TestUtils.initSslContext(
                 newContext(getConscryptProvider()), TestKeyStore.getClient());
         Set<String> supported = new LinkedHashSet<>(supportedCiphers(jdkContext));
@@ -446,8 +542,10 @@ public final class TestUtils {
 
     /**
      * Picks a port that is not used right at this moment.
-     * Warning: Not thread safe. May see "BindException: Address already in use: bind" if using the
-     * returned port to create a new server socket when other threads/processes are concurrently
+     * Warning: Not thread safe. May see "BindException: Address already in use:
+     * bind" if using the
+     * returned port to create a new server socket when other threads/processes are
+     * concurrently
      * creating new sockets without a specific port.
      */
     public static int pickUnusedPort() {
@@ -493,7 +591,8 @@ public final class TestUtils {
     }
 
     /**
-     * Initializes the given server-side {@code context} with the given cert chain and private key.
+     * Initializes the given server-side {@code context} with the given cert chain
+     * and private key.
      */
     public static SSLContext initServerSslContext(SSLContext context) {
         return initSslContext(context, TestKeyStore.getServer());
@@ -512,11 +611,12 @@ public final class TestUtils {
     }
 
     /**
-     * Performs the initial TLS handshake between the two {@link SSLEngine} instances.
+     * Performs the initial TLS handshake between the two {@link SSLEngine}
+     * instances.
      */
     public static void doEngineHandshake(SSLEngine clientEngine, SSLEngine serverEngine,
-        ByteBuffer clientAppBuffer, ByteBuffer clientPacketBuffer, ByteBuffer serverAppBuffer,
-        ByteBuffer serverPacketBuffer, boolean beginHandshake) throws SSLException {
+            ByteBuffer clientAppBuffer, ByteBuffer clientPacketBuffer, ByteBuffer serverAppBuffer,
+            ByteBuffer serverPacketBuffer, boolean beginHandshake) throws SSLException {
         if (beginHandshake) {
             clientEngine.beginHandshake();
             serverEngine.beginHandshake();
@@ -537,7 +637,8 @@ public final class TestUtils {
             serverResult = serverEngine.wrap(EMPTY_BUFFER, serverPacketBuffer);
             runDelegatedTasks(serverResult, serverEngine);
 
-            // Verify that the consumed and produced number match what is in the buffers now.
+            // Verify that the consumed and produced number match what is in the buffers
+            // now.
             assertEquals(0, clientResult.bytesConsumed());
             assertEquals(0, serverResult.bytesConsumed());
             assertEquals(clientPacketBuffer.position() - cTOsPos, clientResult.bytesProduced());
@@ -567,13 +668,14 @@ public final class TestUtils {
             serverResult = serverEngine.unwrap(clientPacketBuffer, serverAppBuffer);
             runDelegatedTasks(serverResult, serverEngine);
 
-            // Verify that the consumed and produced number match what is in the buffers now.
+            // Verify that the consumed and produced number match what is in the buffers
+            // now.
             assertEquals(serverPacketBuffer.position() - sTOcPos, clientResult.bytesConsumed());
             assertEquals(clientPacketBuffer.position() - cTOsPos, serverResult.bytesConsumed());
             assertEquals(clientAppBuffer.position() - clientAppReadBufferPos,
-                clientResult.bytesProduced());
+                    clientResult.bytesProduced());
             assertEquals(serverAppBuffer.position() - serverAppReadBufferPos,
-                serverResult.bytesProduced());
+                    serverResult.bytesProduced());
 
             clientPacketBuffer.compact();
             serverPacketBuffer.compact();
@@ -621,7 +723,7 @@ public final class TestUtils {
     }
 
     /**
-     * Decodes the provided hexadecimal string into a byte array.  Odd-length inputs
+     * Decodes the provided hexadecimal string into a byte array. Odd-length inputs
      * are not allowed.
      *
      * Throws an {@code IllegalArgumentException} if the input is malformed.
@@ -631,8 +733,10 @@ public final class TestUtils {
     }
 
     /**
-     * Decodes the provided hexadecimal string into a byte array. If {@code allowSingleChar}
-     * is {@code true} odd-length inputs are allowed and the first character is interpreted
+     * Decodes the provided hexadecimal string into a byte array. If
+     * {@code allowSingleChar}
+     * is {@code true} odd-length inputs are allowed and the first character is
+     * interpreted
      * as the lower bits of the first result byte.
      *
      * Throws an {@code IllegalArgumentException} if the input is malformed.
@@ -642,7 +746,7 @@ public final class TestUtils {
     }
 
     /**
-     * Decodes the provided hexadecimal string into a byte array.  Odd-length inputs
+     * Decodes the provided hexadecimal string into a byte array. Odd-length inputs
      * are not allowed.
      *
      * Throws an {@code IllegalArgumentException} if the input is malformed.
@@ -652,8 +756,10 @@ public final class TestUtils {
     }
 
     /**
-     * Decodes the provided hexadecimal string into a byte array. If {@code allowSingleChar}
-     * is {@code true} odd-length inputs are allowed and the first character is interpreted
+     * Decodes the provided hexadecimal string into a byte array. If
+     * {@code allowSingleChar}
+     * is {@code true} odd-length inputs are allowed and the first character is
+     * interpreted
      * as the lower bits of the first result byte.
      *
      * Throws an {@code IllegalArgumentException} if the input is malformed.
@@ -666,7 +772,8 @@ public final class TestUtils {
         int i = 0;
         if (allowSingleChar) {
             if ((encoded.length % 2) != 0) {
-                // Odd number of digits -- the first digit is the lower 4 bits of the first result byte.
+                // Odd number of digits -- the first digit is the lower 4 bits of the first
+                // result byte.
                 result[resultOffset++] = (byte) toDigit(encoded, i);
                 i++;
             }
@@ -684,7 +791,8 @@ public final class TestUtils {
     }
 
     private static int toDigit(char[] str, int offset) throws IllegalArgumentException {
-        // NOTE: that this isn't really a code point in the traditional sense, since we're
+        // NOTE: that this isn't really a code point in the traditional sense, since
+        // we're
         // just rejecting surrogate pairs outright.
         int pseudoCodePoint = str[offset];
 
@@ -712,8 +820,7 @@ public final class TestUtils {
         return new String(hex);
     }
 
-    private static final String BASE64_ALPHABET =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    private static final String BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     public static String encodeBase64(byte[] data) {
         // Base64 was introduced in Java 8, so if it's not available we can use a hacky
@@ -725,8 +832,8 @@ public final class TestUtils {
             for (int i = 0; i < data.length; i += 3) {
                 int padding = (i + 2 < data.length) ? 0 : (i + 3 - data.length);
                 byte b1 = data[i];
-                byte b2 = padding >= 2 ? 0 : data[i+1];
-                byte b3 = padding >= 1 ? 0 : data[i+2];
+                byte b2 = padding >= 2 ? 0 : data[i + 1];
+                byte b3 = padding >= 1 ? 0 : data[i + 2];
 
                 char c1 = BASE64_ALPHABET.charAt((b1 & 0xFF) >>> 2);
                 char c2 = BASE64_ALPHABET.charAt(((b1 & 0x03) << 4) | ((b2 & 0xFF) >>> 4));
@@ -759,16 +866,13 @@ public final class TestUtils {
             int outputindex = 0;
             for (int i = 0; i < data.length(); i += 4) {
                 char c1 = data.charAt(i);
-                char c2 = data.charAt(i+1);
-                char c3 = (i+2 < data.length()) ? data.charAt(i+2) : 'A';
-                char c4 = (i+3 < data.length()) ? data.charAt(i+3) : 'A';
+                char c2 = data.charAt(i + 1);
+                char c3 = (i + 2 < data.length()) ? data.charAt(i + 2) : 'A';
+                char c4 = (i + 3 < data.length()) ? data.charAt(i + 3) : 'A';
 
-                byte b1 = (byte)
-                        (BASE64_ALPHABET.indexOf(c1) << 2 | BASE64_ALPHABET.indexOf(c2) >>> 4);
-                byte b2 = (byte)
-                        ((BASE64_ALPHABET.indexOf(c2) & 0x0F) << 4 | BASE64_ALPHABET.indexOf(c3) >>> 2);
-                byte b3 = (byte)
-                        ((BASE64_ALPHABET.indexOf(c3) & 0x03) << 6 | BASE64_ALPHABET.indexOf(c4));
+                byte b1 = (byte) (BASE64_ALPHABET.indexOf(c1) << 2 | BASE64_ALPHABET.indexOf(c2) >>> 4);
+                byte b2 = (byte) ((BASE64_ALPHABET.indexOf(c2) & 0x0F) << 4 | BASE64_ALPHABET.indexOf(c3) >>> 2);
+                byte b3 = (byte) ((BASE64_ALPHABET.indexOf(c3) & 0x03) << 6 | BASE64_ALPHABET.indexOf(c4));
 
                 output[outputindex++] = b1;
                 if (outputindex < output.length) {
@@ -817,5 +921,14 @@ public final class TestUtils {
     public static boolean isOsx() {
         String name = osName();
         return name.startsWith("macosx") || name.startsWith("osx");
+    }
+
+    public static int getFreePort() {
+        try (ServerSocket serverSocket = new ServerSocket(
+                0, 5, InetAddress.getLoopbackAddress());) {
+            return serverSocket.getLocalPort();
+        } catch (IOException e) {
+            throw new RuntimeException("Get free port failed!", e);
+        }
     }
 }

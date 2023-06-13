@@ -1,5 +1,6 @@
 import org.ajoberstar.grgit.Grgit
 import org.gradle.util.VersionNumber
+import java.util.concurrent.TimeUnit
 
 buildscript {
     ext.errorproneVersion = '2.4.0'
@@ -64,7 +65,15 @@ subprojects {
         } else {
             tongsuoHome = "$System.env.TONGSUO_HOME"
         }
+
         tongsuoIncludeDir = normalizePath("$tongsuoHome/include")
+        archBuild = libDir()
+        tongsuoExecutePath = normalizePath("$tongsuoHome/$archBuild/bin/openssl")
+        tongsuoLibPath = normalizePath("$tongsuoHome/$archBuild/lib")
+        tongsuoPathProp = "test.babassl.path"
+        tongsuoLibPathProp = "test.babassl.lib.path"
+        opensslPathProp = "test.openssl.path"
+        opensslLibPathProp = "test.openssl.lib.path"
 
         // Ensure the environment is configured properly.
         assert file("$tongsuoIncludeDir").exists()
@@ -192,9 +201,61 @@ subprojects {
         // Enable logging for all conscrypt classes while running tests.
         systemProperty 'java.util.logging.config.file', "${rootDir}/test_logging.properties"
         maxHeapSize = '1500m'
+
+        filter {
+            if (!isTongsuoAvailable(tongsuoExecutePath, tongsuoLibPath)) {
+                // Ignore BabaSSL-related tests if no BabaSSL is available
+                excludeTestsMatching("*BabaSSL*Test")
+            } else {
+                systemProperty "${tongsuoPathProp}", "${tongsuoExecutePath}"
+                systemProperty "${opensslPathProp}", "${tongsuoExecutePath}"
+                systemProperty "${tongsuoLibPathProp}", "${tongsuoLibPath}"
+                systemProperty "${opensslLibPathProp}", "${tongsuoLibPath}"
+            }
+        }
     }
 }
 
 static String normalizePath(path) {
     new File(path.toString()).absolutePath
+}
+
+// Determine if Tongsuo is available
+boolean isTongsuoAvailable(String tongsuoPath, String tongsuoLibPath) {
+    int exitCode = -1
+    try {
+        ProcessBuilder processBuild = new ProcessBuilder(tongsuoPath, "version")
+        processBuild.environment().put(ldKey(), tongsuoLibPath)
+        Process process = processBuild.start()
+        process.waitFor(3, TimeUnit.SECONDS)
+        exitCode = process.exitValue()
+    } catch (Exception e) {
+        println("Tongsuo is unavailable: " + e.cause)
+    }
+
+    return exitCode == 0
+}
+
+// Determine if archetecture is x64 or arm64
+String libDir() {
+    String arch = "${osdetector.arch}"
+    if (arch == "aarch_64") {
+        return "build.arm64"
+    } else if (arch == "x86_64") {
+        return "build.x64"
+    } else {
+        return "";
+    }
+}
+
+// Determine which LD_LIBRARY_PATH should be added as map key
+String ldKey() {
+    String os = "${osdetector.os}"
+    if (os == "osx") {
+        return "DYLD_LIBRARY_PATH"
+    } else if (os == "linux") {
+        return "LD_LIBRARY_PATH"
+    } else {
+        return "";
+    }
 }

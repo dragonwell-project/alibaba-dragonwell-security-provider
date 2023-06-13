@@ -30,7 +30,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -48,7 +50,7 @@ public class TestTLSWithJetty {
     private static final char[] EMPTY_PASSWORD = new char[0];
 
     @Test
-    public void test_TLS13_SM() throws Exception {
+    public void test_TLS13_SM_With_Jetty() throws Exception {
         Server server = createServer();
         server.start();
         int port = server.getURI().getPort();
@@ -98,9 +100,8 @@ public class TestTLSWithJetty {
     }
 
     private static SSLContext createContext() throws Exception {
-        KeyStore keyStore = buildKeyStoreForShangMi("self_sign_sm2_cert/sm2.crt",
-                "self_sign_sm2_cert/sm2PriKeyPkcs8.key");
-        SSLContext sslContext = SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider());
+        KeyStore keyStore = buildKeyStoreForShangMi("self_sign_sm2_cert", "sm2.crt", "sm2PriKeyPkcs8.key");
+        SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
 
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         kmf.init(keyStore, EMPTY_PASSWORD);
@@ -112,16 +113,21 @@ public class TestTLSWithJetty {
         return sslContext;
     }
 
-    private static KeyStore buildKeyStoreForShangMi(String cert, String key) throws Exception {
-        X509Certificate selfSignCert = OpenSSLX509Certificate.fromX509PemInputStream(openTestFile(cert));
-        PrivateKey privateKey = readSM2PrivateKeyPemFile(key);
+    private static KeyStore buildKeyStoreForShangMi(String dirPath, String selfCert, String key) throws Exception {
+        String certMatiral = TestUtils.certStr(dirPath, selfCert);
+        X509Certificate caCert = OpenSSLX509Certificate
+                .fromX509PemInputStream(new ByteArrayInputStream(certMatiral.getBytes()));
+        String keyMatiral = TestUtils.keyStr(dirPath, key);
+        PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(
+                Base64.getMimeDecoder().decode(keyMatiral));
+        PrivateKey privateKey = KeyFactory.getInstance("SM2").generatePrivate(privKeySpec);
 
         // Build Certification Chain
-        X509Certificate[] chain = new X509Certificate[] { selfSignCert };
+        X509Certificate[] chain = new X509Certificate[] { caCert };
         KeyStore ks = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
         ks.load(null);
         ks.setKeyEntry("tls-ee-demo", privateKey, EMPTY_PASSWORD, chain);
-        ks.setCertificateEntry("tls-trust-demo", selfSignCert);
+        ks.setCertificateEntry("tls-trust-demo", caCert);
         return ks;
     }
 

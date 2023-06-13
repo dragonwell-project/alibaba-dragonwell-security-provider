@@ -189,6 +189,7 @@ tasks.register("platformJar", Jar) {
     from sourceSets.platform.output
 }
 
+// Avoid *.RSA *.SF and *.DSA files exist in a jar.
 tasks.register("testJar", ShadowJar) {
     classifier = 'tests'
     configurations = [project.configurations.testRuntimeClasspath]
@@ -292,6 +293,10 @@ dependencies {
     testImplementation("org.eclipse.jetty:jetty-servlet:9.4.44.v20210927")
     testImplementation("org.eclipse.jetty:jetty-client:9.4.44.v20210927")
     testImplementation("org.apache.httpcomponents:httpclient:4.5.13")
+    testImplementation("com.tencent.kona:kona-crypto:1.0.8")
+    testImplementation("com.tencent.kona:kona-pkix:1.0.8")
+    testImplementation("com.tencent.kona:kona-ssl:1.0.8")
+    testImplementation("com.tencent.kona:kona-provider:1.0.8")
 }
 
 nativeBuilds.each { nativeBuild ->
@@ -346,6 +351,7 @@ def suiteClass = "org/conscrypt/ConscryptSuite.class";
 
 test {
     include suiteClass, "org/conscrypt/ConscryptOpenJdkSuite.class"
+    systemProperty "test.classpath", classpath.join(":")
 }
 
 def testFdSocket = tasks.register("testFdSocket", Test) {
