@@ -81,6 +81,9 @@ import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 import org.conscrypt.ct.CTLogStore;
 import org.conscrypt.ct.CTPolicy;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 import sun.security.x509.AlgorithmId;
 
 /**
@@ -148,7 +151,7 @@ final class Platform {
      * if the default constructor is used.
      */
     static String getDefaultProviderName() {
-        return "Conscrypt";
+        return "Dragonwell";
     }
 
     static boolean provideTrustManagerByDefault() {
@@ -679,7 +682,7 @@ final class Platform {
         // us at least one cert.
         Provider[] providers = Security.getProviders("TrustManagerFactory.PKIX");
         for (Provider p : providers) {
-            if (Conscrypt.isConscrypt(p)) {
+            if (DragonwellSecurity.isDragonwellSecurity(p)) {
                 // We need to skip any Conscrypt provider we find because this method is called
                 // when we're trying to determine the default set of CA certs for one of our
                 // TrustManagers, so trying to construct a TrustManager from this provider

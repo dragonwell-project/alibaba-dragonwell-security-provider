@@ -249,9 +249,9 @@ public final class TestUtils {
             String defaultName = (String) conscryptClass("Platform")
                     .getDeclaredMethod("getDefaultProviderName")
                     .invoke(null);
-            Constructor<?> c = conscryptClass("OpenSSLProvider")
+            Constructor<?> c = conscryptClass("DragonwellSecurityProvider")
                     .getDeclaredConstructor(String.class, Boolean.TYPE, String.class);
-
+            c.setAccessible(true);
             if (!isClassAvailable("javax.net.ssl.X509ExtendedTrustManager")) {
                 return (Provider) c.newInstance(defaultName, false, "TLSv1.3");
             } else {
@@ -419,7 +419,7 @@ public final class TestUtils {
      */
     public static Class<?> conscryptClass(String simpleName) throws ClassNotFoundException {
         ClassNotFoundException ex = null;
-        for (String packageName : new String[] { "org.conscrypt", "com.android.org.conscrypt" }) {
+        for (String packageName : new String[] { "org.conscrypt", "com.alibaba.dragonwell.security" }) {
             String name = packageName + "." + simpleName;
             try {
                 return Class.forName(name);
@@ -450,7 +450,7 @@ public final class TestUtils {
     static SSLSocketFactory setUseEngineSocket(
             SSLSocketFactory conscryptFactory, boolean useEngineSocket) {
         try {
-            Class<?> clazz = conscryptClass("Conscrypt");
+            Class<?> clazz = conscryptClass("DragonwellSecurity");
             Method method = clazz.getMethod("setUseEngineSocket", SSLSocketFactory.class, boolean.class);
             method.invoke(null, conscryptFactory, useEngineSocket);
             return conscryptFactory;
@@ -462,7 +462,7 @@ public final class TestUtils {
     static SSLServerSocketFactory setUseEngineSocket(
             SSLServerSocketFactory conscryptFactory, boolean useEngineSocket) {
         try {
-            Class<?> clazz = conscryptClass("Conscrypt");
+            Class<?> clazz = conscryptClass("DragonwellSecurity");
             Method method = clazz.getMethod(
                     "setUseEngineSocket", SSLServerSocketFactory.class, boolean.class);
             method.invoke(null, conscryptFactory, useEngineSocket);
@@ -497,7 +497,7 @@ public final class TestUtils {
 
     public static void setUseSessionTickets(SSLSocket socket, boolean useTickets) {
         try {
-            Class<?> clazz = conscryptClass("Conscrypt");
+            Class<?> clazz = conscryptClass("DragonwellSecurity");
             Method method = clazz.getMethod("setUseSessionTickets", SSLSocket.class, boolean.class);
             method.invoke(null, socket, useTickets);
         } catch (Exception e) {

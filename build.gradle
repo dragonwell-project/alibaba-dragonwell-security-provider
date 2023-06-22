@@ -55,9 +55,9 @@ subprojects {
     apply plugin: "jacoco"
     apply plugin: "net.ltgt.errorprone"
 
-    group = "org.conscrypt"
-    description = 'Conscrypt is an alternate Java Security Provider that uses BoringSSL'
-    version = "2.6-SNAPSHOT"
+    group = "com.alibaba.dragonwell"
+    description = 'Dragonwell Security is an alternate High Performance Java Security Provider'
+    version = "1.0.0"
 
     ext {
         if (project.hasProperty("tongsuoHome")) {
@@ -133,11 +133,11 @@ subprojects {
         ext {
             parsedVersion = VersionNumber.parse(version)
         }
-        property("org.conscrypt.version.major", parsedVersion.getMajor())
-        property("org.conscrypt.version.minor", parsedVersion.getMinor())
-        property("org.conscrypt.version.patch", parsedVersion.getMicro())
-        property("org.conscrypt.tongsuo.version", tongsuoVersion)
-        outputFile "build/generated/resources/org/conscrypt/conscrypt.properties"
+        property("com.alibaba.dragonwell.security.version.major", parsedVersion.getMajor())
+        property("com.alibaba.dragonwell.security.version.minor", parsedVersion.getMinor())
+        property("com.alibaba.dragonwell.security.version.patch", parsedVersion.getMicro())
+        property("com.alibaba.dragonwell.security.tongsuo.version", tongsuoVersion)
+        outputFile "build/generated/resources/com/alibaba/dragonwell/security/dragonwell_security.properties"
     }
 
     java {

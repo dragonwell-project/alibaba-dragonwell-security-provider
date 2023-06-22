@@ -68,7 +68,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.conscrypt.Conscrypt;
 import org.conscrypt.SM2PrivateKeySpec;
 import org.conscrypt.SM2PublicKeySpec;
 import org.conscrypt.TestUtils;
@@ -78,6 +77,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 import tests.util.ServiceTester;
 
 @RunWith(JUnit4.class)
@@ -229,7 +231,7 @@ public class SignatureTest {
             sig.verify(signature);
         }
 
-        if (Conscrypt.isConscrypt(sig.getProvider())) {
+        if (DragonwellSecurity.isDragonwellSecurity(sig.getProvider())) {
             testSignature_MultipleThreads_Misuse(sig, keyPair.getPrivate());
         }
     }

@@ -62,12 +62,14 @@ import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.conscrypt.Conscrypt;
 import org.conscrypt.TestUtils;
 import org.conscrypt.java.security.StandardNames;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 import tests.util.ServiceTester;
 
 @RunWith(JUnit4.class)
@@ -661,7 +663,7 @@ public class CertificateFactoryTest {
         for (Provider p : providers) {
             final CertificateFactory cf = CertificateFactory.getInstance("X.509", p);
 
-            if (Conscrypt.isConscrypt(p)) {
+            if (DragonwellSecurity.isDragonwellSecurity(p)) {
                 // It's not specified whether duplicated certs should work, but we want Conscrypt
                 // to accept them
                 {

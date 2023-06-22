@@ -1,4 +1,4 @@
-description = 'Conscrypt: API Doclet'
+description = 'Dragonwell Security: API Doclet'
 
 
 java {

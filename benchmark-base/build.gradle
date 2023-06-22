@@ -1,6 +1,6 @@
-description = 'Conscrypt: Base library for benchmarks'
+description = 'Dragonwell Security: Base library for benchmarks'
 
 dependencies {
-    implementation project(path: ":conscrypt-testing", configuration: "shadow"),
+    implementation project(path: ":security-testing", configuration: "shadow"),
             libraries.junit
 }

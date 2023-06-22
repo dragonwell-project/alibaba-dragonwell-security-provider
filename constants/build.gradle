@@ -1,4 +1,4 @@
-description = 'Conscrypt: Constants'
+description = 'Dragonwell Security: Constants'
 
 ext {
     genDir = "${project.buildDir}/generated-sources"
@@ -15,7 +15,7 @@ sourceSets.main {
 
 dependencies {
     implementation files("${genDir}") {
-        builtBy ':conscrypt-constants:runGen'
+        builtBy ':security-constants:runGen'
     }
 }
 

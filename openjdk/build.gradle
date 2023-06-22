@@ -8,7 +8,7 @@ import org.codehaus.groovy.runtime.InvokerHelper
 
 apply plugin: 'biz.aQute.bnd.builder'
 
-description = 'Conscrypt: OpenJdk'
+description = 'Dragonwell Security: A High Performance Java Security Provider with Tongsuo native underlying lib'
 
 // Gradle mostly uses Java os.arch names for architectures which feeds into default
 // targetPlatform names.  Notable exception Gradle 6.9.x reports MacOS/ARM as
@@ -139,7 +139,8 @@ sourceSets {
     main {
         java {
             srcDirs += "${rootDir}/common/src/main/java"
-            srcDirs += project(':conscrypt-constants').sourceSets.main.java.srcDirs
+            srcDirs += "${rootDir}/provider/src/main/java"
+            srcDirs += project(':security-constants').sourceSets.main.java.srcDirs
         }
         resources {
             srcDirs += "build/generated/resources"
@@ -156,9 +157,11 @@ sourceSets {
     test {
         java {
             srcDirs += "${rootDir}/common/src/test/java"
+            srcDirs += "${rootDir}/provider/src/test/java"
         }
         resources {
             srcDirs += "${rootDir}/common/src/test/resources"
+            srcDirs += "${rootDir}/provider/src/test/resources"
             // This shouldn't be needed but seems to help IntelliJ locate the native artifact.
             // srcDirs += preferredNativeFileDir
             srcDirs += buildToTest.nativeResourcesDir()
@@ -266,20 +269,20 @@ publishing.publications.maven {
 
 jar.manifest {
     attributes ('TONGSUO-Version' : tongsuoVersion,
-                'Automatic-Module-Name' : 'org.conscrypt',
-                'Bundle-SymbolicName': 'org.conscrypt',
-                '-exportcontents': 'org.conscrypt.*')
+                'Automatic-Module-Name' : 'com.alibaba.dragonwell.security, org.conscrypt',
+                'Bundle-SymbolicName': 'com.alibaba.dragonwell.security',
+                '-exportcontents': 'com.alibaba.dragonwell.security.*, org.conscrypt.*')
 }
 
 dependencies {
     // This is used for the @Internal annotation processing in JavaDoc
-    publicApiDocs project(':conscrypt-api-doclet')
+    publicApiDocs project(':security-api-doclet')
 
     // This is listed as compile-only, but we absorb its contents.
-    compileOnly project(':conscrypt-constants')
+    compileOnly project(':security-constants')
 
-    testImplementation project(':conscrypt-constants'),
-            project(path: ':conscrypt-testing', configuration: 'shadow'),
+    testImplementation project(':security-constants'),
+            project(path: ':security-testing', configuration: 'shadow'),
             libraries.junit,
             libraries.mockito
 

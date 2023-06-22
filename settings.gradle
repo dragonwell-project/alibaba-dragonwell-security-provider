@@ -1,20 +1,20 @@
-rootProject.name = "conscrypt"
-include ":conscrypt-api-doclet"
-include ":conscrypt-benchmark-base"
-include ":conscrypt-benchmark-graphs"
-include ":conscrypt-benchmark-jmh"
-include ":conscrypt-constants"
-include ":conscrypt-libcore-stub"
-include ":conscrypt-openjdk"
-include ":conscrypt-openjdk-uber"
-include ":conscrypt-testing"
+rootProject.name = "security"
+include ":security-api-doclet"
+include ":security-benchmark-base"
+include ":security-benchmark-graphs"
+include ":security-benchmark-jmh"
+include ":security-constants"
+include ":security-libcore-stub"
+include ":security-native"
+include ":security-native-uber"
+include ":security-testing"
 
-project(':conscrypt-api-doclet').projectDir = "$rootDir/api-doclet" as File
-project(':conscrypt-benchmark-base').projectDir = "$rootDir/benchmark-base" as File
-project(':conscrypt-benchmark-graphs').projectDir = "$rootDir/benchmark-graphs" as File
-project(':conscrypt-benchmark-jmh').projectDir = "$rootDir/benchmark-jmh" as File
-project(':conscrypt-constants').projectDir = "$rootDir/constants" as File
-project(':conscrypt-libcore-stub').projectDir = "$rootDir/libcore-stub" as File
-project(':conscrypt-openjdk').projectDir = "$rootDir/openjdk" as File
-project(':conscrypt-openjdk-uber').projectDir = "$rootDir/openjdk-uber" as File
-project(':conscrypt-testing').projectDir = "$rootDir/testing" as File
+project(':security-api-doclet').projectDir = "$rootDir/api-doclet" as File
+project(':security-benchmark-base').projectDir = "$rootDir/benchmark-base" as File
+project(':security-benchmark-graphs').projectDir = "$rootDir/benchmark-graphs" as File
+project(':security-benchmark-jmh').projectDir = "$rootDir/benchmark-jmh" as File
+project(':security-constants').projectDir = "$rootDir/constants" as File
+project(':security-libcore-stub').projectDir = "$rootDir/libcore-stub" as File
+project(':security-native').projectDir = "$rootDir/openjdk" as File
+project(':security-native-uber').projectDir = "$rootDir/openjdk-uber" as File
+project(':security-testing').projectDir = "$rootDir/testing" as File

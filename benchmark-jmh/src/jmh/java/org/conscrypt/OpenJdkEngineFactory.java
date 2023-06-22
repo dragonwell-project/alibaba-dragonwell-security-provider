@@ -15,6 +15,8 @@
  */
 package org.conscrypt;
 
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+import com.alibaba.dragonwell.security.DragonwellSecurityProvider;
 import static io.netty.handler.ssl.SslProvider.OPENSSL;
 import static io.netty.handler.ssl.SslProvider.OPENSSL_REFCNT;
 import static org.conscrypt.TestUtils.initClientSslContext;
@@ -87,7 +89,7 @@ public enum OpenJdkEngineFactory implements EngineFactory {
         public SSLEngine newClientEngine(String cipher, boolean useAlpn) {
             SSLEngine engine = initEngine(clientContext.createSSLEngine(), cipher, true);
             if (useAlpn) {
-                Conscrypt.setApplicationProtocols(engine, new String[] {ApplicationProtocolNames.HTTP_2});
+                DragonwellSecurity.setApplicationProtocols(engine, new String[] {ApplicationProtocolNames.HTTP_2});
             }
             return engine;
         }
@@ -96,7 +98,7 @@ public enum OpenJdkEngineFactory implements EngineFactory {
         public SSLEngine newServerEngine(String cipher, boolean useAlpn) {
             SSLEngine engine = initEngine(serverContext.createSSLEngine(), cipher, false);
             if (useAlpn) {
-                Conscrypt.setApplicationProtocols(engine, new String[] {ApplicationProtocolNames.HTTP_2});
+                DragonwellSecurity.setApplicationProtocols(engine, new String[] {ApplicationProtocolNames.HTTP_2});
             }
             return engine;
         }
@@ -104,7 +106,7 @@ public enum OpenJdkEngineFactory implements EngineFactory {
         private SSLContext newContext() {
             try {
                 return SSLContext.getInstance(
-                        OpenJdkEngineFactoryConfig.PROTOCOL, new OpenSSLProvider());
+                        OpenJdkEngineFactoryConfig.PROTOCOL, new DragonwellSecurityProvider());
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
@@ -117,9 +119,9 @@ public enum OpenJdkEngineFactory implements EngineFactory {
         @Override
         public SSLEngine newClientEngine(String cipher, boolean useAlpn) {
             SSLEngine engine = initEngine(clientContext.createSSLEngine(), cipher, true);
-            Conscrypt.setBufferAllocator(engine, NettyBufferAllocator.getInstance());
+            DragonwellSecurity.setBufferAllocator(engine, NettyBufferAllocator.getInstance());
             if (useAlpn) {
-                Conscrypt.setApplicationProtocols(engine, new String[] {ApplicationProtocolNames.HTTP_2});
+                DragonwellSecurity.setApplicationProtocols(engine, new String[] {ApplicationProtocolNames.HTTP_2});
             }
             return engine;
         }
@@ -127,9 +129,9 @@ public enum OpenJdkEngineFactory implements EngineFactory {
         @Override
         public SSLEngine newServerEngine(String cipher, boolean useAlpn) {
             SSLEngine engine = initEngine(serverContext.createSSLEngine(), cipher, false);
-            Conscrypt.setBufferAllocator(engine, NettyBufferAllocator.getInstance());
+            DragonwellSecurity.setBufferAllocator(engine, NettyBufferAllocator.getInstance());
             if (useAlpn) {
-                Conscrypt.setApplicationProtocols(engine, new String[] {ApplicationProtocolNames.HTTP_2});
+                DragonwellSecurity.setApplicationProtocols(engine, new String[] {ApplicationProtocolNames.HTTP_2});
             }
             return engine;
         }
@@ -137,7 +139,7 @@ public enum OpenJdkEngineFactory implements EngineFactory {
         private SSLContext newContext() {
             try {
                 return SSLContext.getInstance(
-                        OpenJdkEngineFactoryConfig.PROTOCOL, new OpenSSLProvider());
+                        OpenJdkEngineFactoryConfig.PROTOCOL, new DragonwellSecurityProvider());
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }

@@ -28,6 +28,8 @@ import java.util.logging.Logger;
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 /**
  * Provides a place where NativeCrypto can call back up to do Java language
  * calls to work on delegated key types from native code. Delegated keys are
@@ -46,7 +48,7 @@ final class CryptoUpcalls {
     private static ArrayList<Provider> getExternalProviders(String algorithm) {
         ArrayList<Provider> providers = new ArrayList<Provider>(1);
         for (Provider p : Security.getProviders(algorithm)) {
-            if (!Conscrypt.isConscrypt(p)) {
+            if (!DragonwellSecurity.isDragonwellSecurity(p)) {
                 providers.add(p);
             }
         }
@@ -79,7 +81,7 @@ final class CryptoUpcalls {
             signature.initSign(javaKey);
 
             // Ignore it if it points back to us.
-            if (Conscrypt.isConscrypt(signature.getProvider())) {
+            if (DragonwellSecurity.isDragonwellSecurity(signature.getProvider())) {
                 signature = null;
             }
         } catch (NoSuchAlgorithmException e) {
@@ -179,7 +181,7 @@ final class CryptoUpcalls {
             c.init(cipherMode, javaKey);
 
             // Ignore it if it points back to us.
-            if (Conscrypt.isConscrypt(c.getProvider())) {
+            if (DragonwellSecurity.isDragonwellSecurity(c.getProvider())) {
                 c = null;
             }
         } catch (NoSuchAlgorithmException e) {

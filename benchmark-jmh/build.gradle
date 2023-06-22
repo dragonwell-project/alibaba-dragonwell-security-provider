@@ -4,13 +4,13 @@ plugins {
 
 apply plugin: 'idea'
 
-description = 'Conscrypt: JMH on OpenJDK Benchmarks'
+description = 'Dragonwell Security: JMH on OpenJDK Benchmarks'
 
-evaluationDependsOn(':conscrypt-openjdk')
+evaluationDependsOn(':security-native')
 
 ext {
-    preferredSourceSet = project(':conscrypt-openjdk').preferredSourceSet
-    preferredNativeFileDir = project(':conscrypt-openjdk').preferredNativeFileDir
+    preferredSourceSet = project(':security-native').preferredSourceSet
+    preferredNativeFileDir = project(':security-native').preferredNativeFileDir
 
     genDir = "${buildDir}/jmh-generated-classes"
     jmhInclude = System.getProperty('jmh.include')
@@ -65,10 +65,10 @@ sourceSets {
 }
 
 dependencies {
-    implementation project(path: ":conscrypt-openjdk", configuration: "runtimeElements"),
-            project(':conscrypt-benchmark-base'),
+    implementation project(path: ":security-native", configuration: "runtimeElements"),
+            project(':security-benchmark-base'),
             // Add the preferred native openjdk configuration for this platform.
-            project(':conscrypt-openjdk').sourceSets["$preferredSourceSet"].output,
+            project(':security-native').sourceSets["$preferredSourceSet"].output,
             libraries.junit,
             libraries.netty_handler,
             libraries.netty_tcnative
@@ -77,8 +77,8 @@ dependencies {
 
     // Override the default JMH dependencies with the new versions.
     jmh libraries.jmh_core,
-            libraries.jmh_generator_reflection,
-            libraries.jmh_generator_bytecode
+        libraries.jmh_generator_reflection,
+        libraries.jmh_generator_bytecode
 }
 
 // Running benchmarks in IntelliJ seems broken without this.

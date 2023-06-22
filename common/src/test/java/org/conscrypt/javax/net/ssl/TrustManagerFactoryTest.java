@@ -38,12 +38,14 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
-import org.conscrypt.Conscrypt;
 import org.conscrypt.java.security.StandardNames;
 import org.conscrypt.java.security.TestKeyStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 import tests.util.ServiceTester;
 
 @RunWith(JUnit4.class)
@@ -65,7 +67,7 @@ public class TrustManagerFactoryTest {
 
     private static boolean supportsManagerFactoryParameters(TrustManagerFactory tmf) {
         return (StandardNames.IS_RI && tmf.getAlgorithm().equals("PKIX")
-            && !Conscrypt.isConscrypt(tmf.getProvider()));
+            && !DragonwellSecurity.isDragonwellSecurity(tmf.getProvider()));
     }
 
     @Test
@@ -164,7 +166,7 @@ public class TrustManagerFactoryTest {
             boolean defaultTrustManager
                     // RI de-duplicates certs from TrustedCertificateEntry and PrivateKeyEntry
                     = issuers.length >
-                    (StandardNames.IS_RI && !Conscrypt.isConscrypt(p) ? 1 : 2) * KEY_TYPES.length;
+                    (StandardNames.IS_RI && !DragonwellSecurity.isDragonwellSecurity(p) ? 1 : 2) * KEY_TYPES.length;
 
             String keyAlgName = TestKeyStore.keyAlgorithm(keyType);
             String sigAlgName = TestKeyStore.signatureAlgorithm(keyType);

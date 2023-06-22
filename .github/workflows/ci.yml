@@ -177,14 +177,14 @@ jobs:
       - name: Build test JAR with dependencies
         if: runner.os == 'Linux' && runner.arch == 'X64'
         shell: bash
-        run: ./gradlew :conscrypt-openjdk:testJar -PcheckErrorQueue
+        run: ./gradlew :security-native:testJar -PcheckErrorQueue
 
       - name: Upload test JAR with dependencies
         if: runner.os == 'Linux' && runner.arch == 'X64'
         uses: actions/upload-artifact@v2
         with:
           name: testjar
-          path: openjdk/build/libs/conscrypt-openjdk-*-tests.jar
+          path: openjdk/build/libs/security-native-*-tests.jar
           if-no-files-found: error
 
   uberjar:
@@ -235,12 +235,12 @@ jobs:
       - name: Build UberJAR with Gradle
         shell: bash
         run: |
-          ./gradlew :conscrypt-openjdk-uber:build -Dorg.conscrypt.openjdk.buildUberJar=true -Dmaven.repo.local="$M2_REPO"
+          ./gradlew :security-native-uber:build -Dcom.alibaba.dragonwell.security.native.buildUberJar=true -Dmaven.repo.local="$M2_REPO"
 
       - name: Publish UberJAR to Maven Local
         shell: bash
         run: |
-          ./gradlew :conscrypt-openjdk-uber:publishToMavenLocal -Dorg.conscrypt.openjdk.buildUberJar=true -Dmaven.repo.local="$M2_REPO"
+          ./gradlew :security-native-uber:publishToMavenLocal -Dcom.alibaba.dragonwell.security.native.buildUberJar=true -Dmaven.repo.local="$M2_REPO"
 
       - name: Upload Maven respository
         uses: actions/upload-artifact@v2
@@ -349,11 +349,11 @@ jobs:
         if: runner.arch == 'X64'
         shell: bash
         run: |
-          DIR="$(find m2/org/conscrypt/conscrypt-openjdk-uber -maxdepth 1 -mindepth 1 -type d -print)"
+          DIR="$(find m2/com/alibaba/dragonwell/security-native-uber -maxdepth 1 -mindepth 1 -type d -print)"
           VERSION="${DIR##*/}"
           TESTJAR="$(find testjar -name '*-tests.jar')"
           zip -d $TESTJAR 'META-INF/*.SF' 'META-INF/*.RSA' 'META-INF/*.DSA'
-          CLASS_PATH="$DIR/conscrypt-openjdk-uber-$VERSION.jar:$TESTJAR"
+          CLASS_PATH="$DIR/security-native-uber-$VERSION.jar:$TESTJAR"
           PROPERTY0="-Dtest.babassl.path=${{ runner.temp }}/Tongsuo/build.x64/bin/openssl"
           PROPERTY1="-Dtest.openssl.path=${{ runner.temp }}/Tongsuo/build.x64/bin/openssl"
           PROPERTY2="-Dtest.babassl.lib.path=${{ runner.temp }}/Tongsuo/build.x64/lib"
@@ -365,11 +365,11 @@ jobs:
         if: runner.arch == 'ARM64'
         shell: bash
         run: |
-          DIR="$(find m2/org/conscrypt/conscrypt-openjdk-uber -maxdepth 1 -mindepth 1 -type d -print)"
+          DIR="$(find m2/com/alibaba/dragonwell/security-native-uber -maxdepth 1 -mindepth 1 -type d -print)"
           VERSION="${DIR##*/}"
           TESTJAR="$(find testjar -name '*-tests.jar')"
           zip -d $TESTJAR 'META-INF/*.SF' 'META-INF/*.RSA' 'META-INF/*.DSA'
-          CLASS_PATH="$DIR/conscrypt-openjdk-uber-$VERSION.jar:$TESTJAR"
+          CLASS_PATH="$DIR/security-native-uber-$VERSION.jar:$TESTJAR"
           PROPERTY0="-Dtest.babassl.path=${{ runner.temp }}/Tongsuo/build.arm64/bin/openssl"
           PROPERTY1="-Dtest.openssl.path=${{ runner.temp }}/Tongsuo/build.arm64/bin/openssl"
           PROPERTY2="-Dtest.babassl.lib.path=${{ runner.temp }}/Tongsuo/build.arm64/lib"

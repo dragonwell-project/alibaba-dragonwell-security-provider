@@ -80,7 +80,6 @@ import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.conscrypt.Conscrypt;
 import org.conscrypt.OpenSSLX509Certificate;
 import org.conscrypt.TestUtils;
 import org.conscrypt.java.security.StandardNames;
@@ -98,6 +97,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 import tests.net.DelegatingSSLSocketFactory;
 import tests.util.ForEachRunner;
 import tests.util.Pair;
@@ -345,7 +347,7 @@ public class SSLSocketTest {
     @Test
     public void test_SSLSocket_setEnabledCipherSuites_ShangMi() throws Exception {
         String[] enabledCipherSuites = {"TLS_SM4_GCM_SM3","TLS_SM4_CCM_SM3"};
-        SSLContext context = SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider());
+        SSLContext context = SSLContext.getInstance("TLSv1.3", DragonwellSecurity.newProvider());
         context.init(null, null, null);
         SSLSocketFactory sf = context.getSocketFactory();
         SSLSocket ssl = (SSLSocket) sf.createSocket();
@@ -1019,7 +1021,7 @@ public class SSLSocketTest {
 
     private static SSLSocket getClientSSLSocketForShangMi(String host, int port) throws Exception {
         // build tls1.3 context
-        SSLContext sslContext = SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider());
+        SSLContext sslContext = SSLContext.getInstance("TLSv1.3", DragonwellSecurity.newProvider());
         X509Certificate ca = OpenSSLX509Certificate.fromX509PemInputStream(openTestFile("sm2/sm2-ca.crt"));
         final X509Certificate caCertificate = ca;
         TrustManager[] tms = new TrustManager[] { new X509TrustManager() {
@@ -1060,7 +1062,7 @@ public class SSLSocketTest {
     private static SSLServerSocket getServerSSLSocketForShangMi() throws Exception{
         char[] EMPTY_PASSWORD = new char[0];
         // build tls1.3 context
-        SSLContext sslContext = SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider());
+        SSLContext sslContext = SSLContext.getInstance("TLSv1.3", DragonwellSecurity.newProvider());
 
         KeyStore ks = buildKeyStoreForShangMi("sm2/sm2-cert.crt", "sm2/sm2-ca.crt", "sm2/sm2-private.key");
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
@@ -1084,7 +1086,7 @@ public class SSLSocketTest {
         final char[] EMPTY_PASSWORD = new char[0];
         final KeyStore serverKeyStore = buildKeyStoreForShangMi("sm2/sm2-cert.crt", "sm2/sm2-ca.crt", "sm2/sm2-private.key");
         final KeyStore clientKeyStore = buildKeyStoreForShangMi("sm2/sm2-leaf-cert.crt", "sm2/sm2-leaf-ca.crt", "sm2/sm2-leaf-private.key");
-        SSLContext sslContext = SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider());
+        SSLContext sslContext = SSLContext.getInstance("TLSv1.3", DragonwellSecurity.newProvider());
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         kmf.init(serverKeyStore, EMPTY_PASSWORD);
         KeyManager[] kms = kmf.getKeyManagers();
@@ -1106,7 +1108,7 @@ public class SSLSocketTest {
         serverSocketDataProcess(serverSocket, "Hello");
         Thread.sleep(5000L);
 
-        SSLContext clientContext = SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider());
+        SSLContext clientContext = SSLContext.getInstance("TLSv1.3", DragonwellSecurity.newProvider());
         KeyManagerFactory clientKmf = KeyManagerFactory.getInstance("SunX509");
         clientKmf.init(clientKeyStore, EMPTY_PASSWORD);
         KeyManager[] clientKms = clientKmf.getKeyManagers();

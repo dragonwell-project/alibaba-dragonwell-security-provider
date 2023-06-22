@@ -16,6 +16,7 @@
 
 package org.conscrypt;
 
+import com.alibaba.dragonwell.security.DragonwellSecurityProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -430,7 +431,7 @@ public final class OpenSSLX509Certificate extends X509Certificate {
     public void verify(PublicKey key, Provider sigProvider)
             throws CertificateException, NoSuchAlgorithmException, InvalidKeyException,
                    SignatureException {
-        if (key instanceof OpenSSLKeyHolder && sigProvider instanceof OpenSSLProvider) {
+        if (key instanceof OpenSSLKeyHolder && sigProvider instanceof DragonwellSecurityProvider) {
             OpenSSLKey pkey = ((OpenSSLKeyHolder) key).getOpenSSLKey();
             verifyOpenSSL(pkey);
             return;

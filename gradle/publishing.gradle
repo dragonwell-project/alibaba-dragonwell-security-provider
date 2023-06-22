@@ -12,12 +12,12 @@ publishing {
                     description = project.description
                 }
 
-                url = 'https://conscrypt.org/'
+                url = 'https://github.com/dragonwell-project/alibaba-dragonwell-security-provider'
 
                 scm {
-                    connection = 'scm:git:https://github.com/google/conscrypt.git'
-                    developerConnection = 'scm:git:git@github.com:google/conscrypt.git'
-                    url = 'https://github.com/google/conscrypt'
+                    connection = 'scm:git:git@github.com:dragonwell-project/alibaba-dragonwell-security-provider.git'
+                    developerConnection = 'scm:git:git@github.com:dragonwell-project/alibaba-dragonwell-security-provider.git'
+                    url = 'https://github.com/dragonwell-project/alibaba-dragonwell-security-provider'
                 }
 
                 licenses {
@@ -29,12 +29,12 @@ publishing {
 
                 developers {
                     developer {
-                        id = 'conscrypt'
-                        name = 'Conscrypt Contributors'
-                        email = 'conscrypt@googlegroups.com'
-                        url = 'https://conscrypt.org/'
-                        organization = 'Google, Inc.'
-                        organizationUrl = 'https://www.google.com'
+                        id = 'dragonwell security'
+                        name = 'Dragonwell Security Contributors'
+                        email = 'jeffery.wsj@alibaba-inc.com'
+                        url = 'https://github.com/dragonwell-project/alibaba-dragonwell-security-provider'
+                        organization = 'Alibaba Cloud, Inc.'
+                        organizationUrl = 'https://cn.aliyun.com/'
                     }
                 }
             }

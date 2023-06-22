@@ -50,12 +50,13 @@ import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 import javax.crypto.ShortBufferException;
 import junit.framework.AssertionFailedError;
-import org.conscrypt.Conscrypt;
 import org.conscrypt.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
 
 /**
  * Tests for all registered Elliptic Curve Diffie-Hellman {@link KeyAgreement} providers.
@@ -374,7 +375,7 @@ public class ECDHKeyAgreementTest {
             assertTrue(Arrays.equals(KAT_SECRET, key.getEncoded()));
         } catch (NoSuchAlgorithmException e) {
             // This provider doesn't support AES, that's fine as long as it's not Conscrypt
-            assertFalse(Conscrypt.isConscrypt(provider));
+            assertFalse(DragonwellSecurity.isDragonwellSecurity(provider));
         }
     }
 
