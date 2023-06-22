@@ -50,6 +50,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 /**
  * This tests that server-initiated cipher renegotiation works properly with a Conscrypt client.
  * BoringSSL does not support user-initiated renegotiation, so we use the JDK implementation for
@@ -141,7 +143,7 @@ public class RenegotiationTest {
         Client(boolean useEngineSocket, int port) {
             try {
                 SSLSocketFactory socketFactory = newConscryptClientContext().getSocketFactory();
-                Conscrypt.setUseEngineSocket(socketFactory, useEngineSocket);
+                DragonwellSecurity.setUseEngineSocket(socketFactory, useEngineSocket);
                 socket = (SSLSocket) socketFactory.createSocket(
                         TestUtils.getLoopbackAddress(), port);
                 socket.setEnabledProtocols(TestUtils.getProtocols());

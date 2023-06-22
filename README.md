@@ -1,42 +1,43 @@
-Conscrypt - A Java Security Provider
+Dragonwell Security Provider - A High Performance Java Security Provider
 ========================================
 
-Conscrypt is a Java Security Provider (JSP) that implements parts of the Java
+Dragonwell Security Provider is a Java Security Provider (JSP) that implements parts of the Java
 Cryptography Extension (JCE) and Java Secure Socket Extension (JSSE).  It uses
-BoringSSL to provide cryptographic primitives and Transport Layer Security (TLS)
-for Java applications on Android and OpenJDK.  See [the capabilities
+[Tongsuo](https://github.com/Tongsuo-Project/Tongsuo) to provide cryptographic primitives and Transport Layer Security (TLS)
+for Java applications on OpenJDK.  See [the capabilities
 documentation](CAPABILITIES.md) for detailed information on what is provided.
 
-The core SSL engine has borrowed liberally from the [Netty](http://netty.io/) project and their
-work on [netty-tcnative](http://netty.io/wiki/forked-tomcat-native.html), giving `Conscrypt`
+Dragonwell Security Provider inherits from Google's project [Conscrypt](https://github.com/google/conscrypt). The core SSL engine has borrowed liberally from the [Netty](http://netty.io/) project and their
+work on [netty-tcnative](http://netty.io/wiki/forked-tomcat-native.html), giving `Dragonwell Security Provider`
 similar performance.
+
+In addition to supporting international mainstream en-decryption Algorithms and SSL/TLS protocols, Dragonwell Security Provider also provides support for China's ShangMi Algorithms [SM2](https://github.com/alipay/tls13-sm-spec/tree/master/sm-en-pdfs/sm2)/[SM3](https://github.com/alipay/tls13-sm-spec/tree/master/sm-en-pdfs/sm3)/[SM4](https://github.com/alipay/tls13-sm-spec/tree/master/sm-en-pdfs/sm4) and [RFC8998](https://datatracker.ietf.org/doc/html/rfc8998) TLS protocol.
 
 <table>
   <tr>
     <td><b>Homepage:</b></td>
     <td>
-      <a href="https://conscrypt.org/">conscrypt.org</a>
+      <a href="https://github.com/dragonwell-project/alibaba-dragonwell-security-provider">github.com/dragonwell-project/alibaba-dragonwell-security-provider</a>
     </td>
   </tr>
   <tr>
     <td><b>Mailing List:</b></td>
     <td>
-      <a href="https://groups.google.com/forum/#!forum/conscrypt">conscrypt@googlegroups.com</a>
+      <a>jeffery.wsj@alibaba-inc.com</a>
     </td>
   </tr>
 </table>
 
 Download
 -------------
-Conscrypt supports **Java 7** or later on OpenJDK and **Gingerbread (API Level
-9)** or later on Android.  The build artifacts are available on Maven Central.
+Dragonwell Security Provider supports **Java 8/11** OpenJDK.  The build artifacts are available on Maven Central.
 
 ### Download JARs
 You can download
 [the JARs](http://search.maven.org/#search%7Cga%7C1%7Cg:%22org.conscrypt%22)
 directly from the Maven repositories.
 
-### OpenJDK (i.e. non-Android)
+### OpenJDK
 
 #### Native Classifiers
 
@@ -46,9 +47,9 @@ platform. We publish artifacts to Maven Central for the following platforms:
 Classifier | OS | Architecture
 -----------| ------- | ---------------- |
 linux-x86_64 | Linux | x86_64 (64-bit)
+linux-aarch_64 | Linux | aarch_64 (64-bit)
 osx-x86_64 | Mac | x86_64 (64-bit)
-windows-x86 | Windows | x86 (32-bit)
-windows-x86_64 | Windows | x86_64 (64-bit)
+osx-aarch_64(M1) | Mac | aarch_64 (64-bit)
 
 #### Maven
 
@@ -66,9 +67,9 @@ Use the [os-maven-plugin](https://github.com/trustin/os-maven-plugin) to add the
 </build>
 
 <dependency>
-  <groupId>org.conscrypt</groupId>
-  <artifactId>conscrypt-openjdk</artifactId>
-  <version>2.5.2</version>
+  <groupId>com.alibaba.dragonwell</groupId>
+  <artifactId>security-native</artifactId>
+  <version>1.0.0</version>
   <classifier>${os.detected.classifier}</classifier>
 </dependency>
 ```
@@ -91,7 +92,7 @@ buildscript {
 apply plugin: "com.google.osdetector"
 
 dependencies {
-  compile 'org.conscrypt:conscrypt-openjdk:2.5.2:' + osdetector.classifier
+  compile 'com.alibaba.dragonwell:security-native:1.0.0:' + osdetector.classifier
 }
 ```
 
@@ -102,40 +103,26 @@ libraries for all of the published platforms. While the overall size of the JAR 
 larger than depending on a platform-specific artifact, it greatly simplifies the task of
 dependency management for most platforms.
 
-To depend on the uber jar, simply use the `conscrypt-openjdk-uber` artifacts.
+To depend on the uber jar, simply use the `security-native-uber` artifacts.
 
 ##### Maven
 ```xml
 <dependency>
-  <groupId>org.conscrypt</groupId>
-  <artifactId>conscrypt-openjdk-uber</artifactId>
-  <version>2.5.2</version>
+  <groupId>com.alibaba.dragonwell</groupId>
+  <artifactId>security-native-uber</artifactId>
+  <version>1.0.0</version>
 </dependency>
 ```
 
 ##### Gradle
 ```gradle
 dependencies {
-  compile 'org.conscrypt:conscrypt-openjdk-uber:2.5.2'
+  compile 'com.alibaba.dragonwell:security-native-uber:1.0.0'
 }
 ```
-
-### Android
-
-The Android AAR file contains native libraries for x86, x86_64, armeabi-v7a, and
-arm64-v8a.
-
-#### Gradle
-
-```gradle
-dependencies {
-  implementation 'org.conscrypt:conscrypt-android:2.5.2'
-}
-```
-
 
 How to Build
 ------------
 
-If you are making changes to Conscrypt, see the [building
+If you are making changes to Dragonwell Security Provider, see the [building
 instructions](BUILDING.md).

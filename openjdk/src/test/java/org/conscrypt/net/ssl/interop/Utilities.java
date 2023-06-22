@@ -153,7 +153,7 @@ public class Utilities {
     private static SSLContext createDragonSSLContext(String contextProtocol, CertTuple certTuple)
             throws Exception {
         KeyStore keyStore = createDragonKeyStore(certTuple);
-        SSLContext sslContext = SSLContext.getInstance(contextProtocol, "Conscrypt");
+        SSLContext sslContext = SSLContext.getInstance(contextProtocol, "Dragonwell");
 
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         kmf.init(keyStore, null);

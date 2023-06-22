@@ -41,6 +41,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 @RunWith(JUnit4.class)
 public class TrustManagerImplTest {
 
@@ -161,7 +163,7 @@ public class TrustManagerImplTest {
 
             // Override the global default hostname verifier with a Conscrypt-specific one that
             // always passes.  Both scenarios should pass.
-            Conscrypt.setHostnameVerifier(tmi, new ConscryptHostnameVerifier() {
+            DragonwellSecurity.setHostnameVerifier(tmi, new ConscryptHostnameVerifier() {
                 @Override
                 public boolean verify(X509Certificate[] certificates, String s, SSLSession sslSession) {
                     return true;
@@ -178,7 +180,7 @@ public class TrustManagerImplTest {
 
             // Now set an instance-specific verifier on the trust manager.  The bad hostname should
             // fail again.
-            Conscrypt.setHostnameVerifier(tmi, Conscrypt.wrapHostnameVerifier(new TestHostnameVerifier()));
+            DragonwellSecurity.setHostnameVerifier(tmi, DragonwellSecurity.wrapHostnameVerifier(new TestHostnameVerifier()));
 
             try {
                 tmi.getTrustedChainForServer(chain, "RSA",
@@ -192,7 +194,7 @@ public class TrustManagerImplTest {
             assertEquals(Arrays.asList(chain), certs);
 
             // Remove the instance-specific verifier, and both should pass again.
-            Conscrypt.setHostnameVerifier(tmi, null);
+            DragonwellSecurity.setHostnameVerifier(tmi, null);
 
             try {
                 tmi.getTrustedChainForServer(chain, "RSA",
@@ -205,7 +207,7 @@ public class TrustManagerImplTest {
                     new FakeSSLSocket(new FakeSSLSession(goodHostname, chain), params));
             assertEquals(Arrays.asList(chain), certs);
         } finally {
-            Conscrypt.setDefaultHostnameVerifier(null);
+            DragonwellSecurity.setDefaultHostnameVerifier(null);
         }
     }
 

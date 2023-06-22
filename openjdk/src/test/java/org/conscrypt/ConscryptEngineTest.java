@@ -54,6 +54,8 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 @RunWith(Parameterized.class)
 public class ConscryptEngineTest {
     private static final int MESSAGE_SIZE = 4096;
@@ -285,12 +287,12 @@ public class ConscryptEngineTest {
         String[] clientAlpnProtocols = new String[]{"http/1.1", "foo", "spdy/2"};
         String[] serverAlpnProtocols = new String[]{"spdy/2", "foo", "bar"};
 
-        Conscrypt.setApplicationProtocols(clientEngine, clientAlpnProtocols);
-        Conscrypt.setApplicationProtocols(serverEngine, serverAlpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(clientEngine, clientAlpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(serverEngine, serverAlpnProtocols);
 
         doHandshake(true);
-        assertEquals("spdy/2", Conscrypt.getApplicationProtocol(clientEngine));
-        assertEquals("spdy/2", Conscrypt.getApplicationProtocol(serverEngine));
+        assertEquals("spdy/2", DragonwellSecurity.getApplicationProtocol(clientEngine));
+        assertEquals("spdy/2", DragonwellSecurity.getApplicationProtocol(serverEngine));
     }
 
     @Test
@@ -301,12 +303,12 @@ public class ConscryptEngineTest {
         String[] clientAlpnProtocols = new String[]{"http/1.1", "foo", "spdy/2"};
         String[] serverAlpnProtocols = new String[]{"h2", "bar", "baz"};
 
-        Conscrypt.setApplicationProtocols(clientEngine, clientAlpnProtocols);
-        Conscrypt.setApplicationProtocols(serverEngine, serverAlpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(clientEngine, clientAlpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(serverEngine, serverAlpnProtocols);
 
         doHandshake(true);
-        assertNull(Conscrypt.getApplicationProtocol(clientEngine));
-        assertNull(Conscrypt.getApplicationProtocol(serverEngine));
+        assertNull(DragonwellSecurity.getApplicationProtocol(clientEngine));
+        assertNull(DragonwellSecurity.getApplicationProtocol(serverEngine));
     }
 
     @Test
@@ -315,17 +317,17 @@ public class ConscryptEngineTest {
 
         // Configure client protocols.
         String[] clientAlpnProtocols = new String[]{"http/1.1", "foo", "spdy/2"};
-        Conscrypt.setApplicationProtocols(clientEngine, clientAlpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(clientEngine, clientAlpnProtocols);
 
         // Configure server selector
         ApplicationProtocolSelector selector = Mockito.mock(ApplicationProtocolSelector.class);
         when(selector.selectApplicationProtocol(same(serverEngine), ArgumentMatchers.<String>anyList()))
                 .thenReturn("spdy/2");
-        Conscrypt.setApplicationProtocolSelector(serverEngine, selector);
+        DragonwellSecurity.setApplicationProtocolSelector(serverEngine, selector);
 
         doHandshake(true);
-        assertEquals("spdy/2", Conscrypt.getApplicationProtocol(clientEngine));
-        assertEquals("spdy/2", Conscrypt.getApplicationProtocol(serverEngine));
+        assertEquals("spdy/2", DragonwellSecurity.getApplicationProtocol(clientEngine));
+        assertEquals("spdy/2", DragonwellSecurity.getApplicationProtocol(serverEngine));
     }
 
     @Test
@@ -334,17 +336,17 @@ public class ConscryptEngineTest {
 
         // Configure client protocols.
         String[] clientAlpnProtocols = new String[]{"http/1.1", "foo", "spdy/2"};
-        Conscrypt.setApplicationProtocols(clientEngine, clientAlpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(clientEngine, clientAlpnProtocols);
 
         // Configure server selector
         ApplicationProtocolSelector selector = Mockito.mock(ApplicationProtocolSelector.class);
         when(selector.selectApplicationProtocol(same(serverEngine), ArgumentMatchers.<String>anyList()))
                 .thenReturn("h2");
-        Conscrypt.setApplicationProtocolSelector(serverEngine, selector);
+        DragonwellSecurity.setApplicationProtocolSelector(serverEngine, selector);
 
         doHandshake(true);
-        assertNull(Conscrypt.getApplicationProtocol(clientEngine));
-        assertNull(Conscrypt.getApplicationProtocol(serverEngine));
+        assertNull(DragonwellSecurity.getApplicationProtocol(clientEngine));
+        assertNull(DragonwellSecurity.getApplicationProtocol(serverEngine));
     }
 
     /**
@@ -379,22 +381,22 @@ public class ConscryptEngineTest {
         String[] alpnProtocols = new String[]{alpnProtocol};
 
         setupEngines(TestKeyStore.getClient(), TestKeyStore.getServer());
-        Conscrypt.setApplicationProtocols(clientEngine, alpnProtocols);
-        Conscrypt.setApplicationProtocols(serverEngine, alpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(clientEngine, alpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(serverEngine, alpnProtocols);
 
         doHandshake(true);
 
         SSLSession session = clientEngine.getSession();
         String cipherSuite = session.getCipherSuite();
         String protocol = session.getProtocol();
-        assertEquals(alpnProtocol, Conscrypt.getApplicationProtocol(clientEngine));
+        assertEquals(alpnProtocol, DragonwellSecurity.getApplicationProtocol(clientEngine));
 
         clientEngine.closeOutbound();
         clientEngine.closeInbound();
 
         assertEquals(cipherSuite, session.getCipherSuite());
         assertEquals(protocol, session.getProtocol());
-        assertEquals(alpnProtocol, Conscrypt.getApplicationProtocol(clientEngine));
+        assertEquals(alpnProtocol, DragonwellSecurity.getApplicationProtocol(clientEngine));
     }
 
     @Test
@@ -405,15 +407,15 @@ public class ConscryptEngineTest {
 
         setupEngines(TestKeyStore.getClient(), TestKeyStore.getServer());
 
-        assertNull(Conscrypt.getApplicationProtocol(clientEngine));
-        assertNull(Conscrypt.getApplicationProtocol(serverEngine));
+        assertNull(DragonwellSecurity.getApplicationProtocol(clientEngine));
+        assertNull(DragonwellSecurity.getApplicationProtocol(serverEngine));
 
-        Conscrypt.setApplicationProtocols(clientEngine, alpnProtocols);
-        Conscrypt.setApplicationProtocols(serverEngine, alpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(clientEngine, alpnProtocols);
+        DragonwellSecurity.setApplicationProtocols(serverEngine, alpnProtocols);
 
         doHandshake(true);
 
-        assertEquals(alpnProtocol, Conscrypt.getApplicationProtocol(clientEngine));
+        assertEquals(alpnProtocol, DragonwellSecurity.getApplicationProtocol(clientEngine));
     }
 
     private void doMutualAuthHandshake(
@@ -459,8 +461,8 @@ public class ConscryptEngineTest {
         SSLEngine engine = serverContext.createSSLEngine();
         engine.setEnabledCipherSuites(TestUtils.getCommonCipherSuites());
         engine.setUseClientMode(client);
-        if (Conscrypt.isConscrypt(engine)) {
-            Conscrypt.setBufferAllocator(engine, bufferType.allocator);
+        if (DragonwellSecurity.isDragonwellSecurity(engine)) {
+            DragonwellSecurity.setBufferAllocator(engine, bufferType.allocator);
         }
         return engine;
     }

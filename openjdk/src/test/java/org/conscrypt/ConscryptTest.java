@@ -33,6 +33,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 @RunWith(JUnit4.class)
 public class ConscryptTest {
 
@@ -41,10 +43,10 @@ public class ConscryptTest {
      */
     @Test
     public void testVersionIsSensible() {
-        Conscrypt.Version version = Conscrypt.version();
+        DragonwellSecurity.Version version = DragonwellSecurity.version();
         assertNotNull(version);
         // The version object should be a singleton
-        assertSame(version, Conscrypt.version());
+        assertSame(version, DragonwellSecurity.version());
 
         assertTrue("Major version: " + version.major(), 1 <= version.major());
         assertTrue("Minor version: " + version.minor(), 0 <= version.minor());
@@ -53,7 +55,7 @@ public class ConscryptTest {
 
     @Test
     public void testProviderBuilder() throws Exception {
-        Provider p = Conscrypt.newProviderBuilder()
+        Provider p = DragonwellSecurity.newProviderBuilder()
             .setName("test name")
             .provideTrustManager(true)
             .defaultTlsProtocol("TLSv1.2").build();
@@ -81,7 +83,7 @@ public class ConscryptTest {
             Security.removeProvider("test name");
         }
 
-        p = Conscrypt.newProviderBuilder()
+        p = DragonwellSecurity.newProviderBuilder()
             .setName("test name 2")
             .provideTrustManager(false)
             .defaultTlsProtocol("TLSv1.3").build();
@@ -111,7 +113,7 @@ public class ConscryptTest {
         }
 
         try {
-            Conscrypt.newProviderBuilder()
+            DragonwellSecurity.newProviderBuilder()
                 .defaultTlsProtocol("invalid").build();
             fail();
         } catch (IllegalArgumentException expected) {

@@ -71,7 +71,6 @@ import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
 import org.bouncycastle.asn1.x509.KeyUsage;
-import org.conscrypt.Conscrypt;
 import org.conscrypt.TestUtils;
 import org.conscrypt.java.security.DefaultKeys;
 import org.conscrypt.java.security.StandardNames;
@@ -82,6 +81,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
 
 @RunWith(JUnit4.class)
 public final class CipherTest {
@@ -1066,7 +1067,7 @@ public final class CipherTest {
                                 || baseCipherName.equals("AES_256"))) {
                         seenCiphersWithModeAndPadding.add(baseCipherName);
                     }
-                    if (!Conscrypt.isConscrypt(provider)) {
+                    if (!DragonwellSecurity.isDragonwellSecurity(provider)) {
                         continue;
                     }
                 }
@@ -4654,7 +4655,7 @@ public final class CipherTest {
                 "DESEDE/CBC/PKCS7PADDING" };
         for (String c : androidOpenSSLCiphers) {
             Cipher cipher = Cipher.getInstance(c);
-            assertTrue(Conscrypt.isConscrypt(cipher.getProvider()));
+            assertTrue(DragonwellSecurity.isDragonwellSecurity(cipher.getProvider()));
             if (c.contains("/CBC/")) {
                 cipher.init(Cipher.DECRYPT_MODE,
                         new SecretKeySpec("0123456789012345".getBytes(StandardCharsets.US_ASCII),

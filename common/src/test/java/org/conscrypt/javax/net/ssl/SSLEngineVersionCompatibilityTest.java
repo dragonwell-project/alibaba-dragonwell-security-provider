@@ -62,7 +62,6 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
-import org.conscrypt.Conscrypt;
 import org.conscrypt.TestUtils;
 import org.conscrypt.java.security.TestKeyStore;
 import org.conscrypt.testing.FailingSniMatcher;
@@ -78,6 +77,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
 
 /**
  * Tests for SSLSocket classes that ensure the TLS 1.2 and TLS 1.3 implementations
@@ -511,11 +512,11 @@ public class SSLEngineVersionCompatibilityTest {
 
         // Enable SNI extension on the engine (this is typically enabled by default)
         // to increase the size of ClientHello.
-        Conscrypt.setHostname(e, "sslenginetest.androidcts.google.com");
+        DragonwellSecurity.setHostname(e, "sslenginetest.androidcts.google.com");
 
         // Enable Session Tickets extension on the engine (this is typically enabled
         // by default) to increase the size of ClientHello.
-        Conscrypt.setUseSessionTickets(e, true);
+        DragonwellSecurity.setUseSessionTickets(e, true);
 
         TlsRecord firstReceivedTlsRecord = TlsTester.parseRecord(getFirstChunk(e));
 
@@ -539,7 +540,7 @@ public class SSLEngineVersionCompatibilityTest {
         SSLEngine e = context.createSSLEngine();
         e.setUseClientMode(true);
 
-        Conscrypt.setHostname(e, "sslenginetest.androidcts.google.com");
+        DragonwellSecurity.setHostname(e, "sslenginetest.androidcts.google.com");
 
         ClientHello clientHello = TlsTester.parseClientHello(getFirstChunk(e));
         ServerNameHelloExtension sniExtension =
@@ -559,7 +560,7 @@ public class SSLEngineVersionCompatibilityTest {
         SSLEngine e = context.createSSLEngine();
         e.setUseClientMode(true);
 
-        Conscrypt.setApplicationProtocols(e, protocolList);
+        DragonwellSecurity.setApplicationProtocols(e, protocolList);
 
         ClientHello clientHello = TlsTester.parseClientHello(getFirstChunk(e));
         AlpnHelloExtension alpnExtension =
@@ -594,15 +595,15 @@ public class SSLEngineVersionCompatibilityTest {
                 new TestSSLEnginePair.Hooks() {
                     @Override
                     void beforeBeginHandshake(SSLEngine client, SSLEngine server) {
-                        assertNull(Conscrypt.getTlsUnique(client));
-                        assertNull(Conscrypt.getTlsUnique(server));
+                        assertNull(DragonwellSecurity.getTlsUnique(client));
+                        assertNull(DragonwellSecurity.getTlsUnique(server));
                     }
                 });
         try {
             assertConnected(pair);
 
-            byte[] clientTlsUnique = Conscrypt.getTlsUnique(pair.client);
-            byte[] serverTlsUnique = Conscrypt.getTlsUnique(pair.server);
+            byte[] clientTlsUnique = DragonwellSecurity.getTlsUnique(pair.client);
+            byte[] serverTlsUnique = DragonwellSecurity.getTlsUnique(pair.server);
             assertNotNull(clientTlsUnique);
             assertNotNull(serverTlsUnique);
             assertArrayEquals(clientTlsUnique, serverTlsUnique);
@@ -621,8 +622,8 @@ public class SSLEngineVersionCompatibilityTest {
                     @Override
                     void beforeBeginHandshake(SSLEngine client, SSLEngine server) {
                         try {
-                            assertNull(Conscrypt.exportKeyingMaterial(client, "FOO", null, 20));
-                            assertNull(Conscrypt.exportKeyingMaterial(server, "FOO", null, 20));
+                            assertNull(DragonwellSecurity.exportKeyingMaterial(client, "FOO", null, 20));
+                            assertNull(DragonwellSecurity.exportKeyingMaterial(server, "FOO", null, 20));
                         } catch (SSLException e) {
                             throw new RuntimeException(e);
                         }
@@ -631,17 +632,17 @@ public class SSLEngineVersionCompatibilityTest {
         try {
             assertConnected(pair);
 
-            byte[] clientEkm = Conscrypt.exportKeyingMaterial(pair.client, "FOO", null, 20);
-            byte[] serverEkm = Conscrypt.exportKeyingMaterial(pair.server, "FOO", null, 20);
+            byte[] clientEkm = DragonwellSecurity.exportKeyingMaterial(pair.client, "FOO", null, 20);
+            byte[] serverEkm = DragonwellSecurity.exportKeyingMaterial(pair.server, "FOO", null, 20);
             assertNotNull(clientEkm);
             assertNotNull(serverEkm);
             assertEquals(20, clientEkm.length);
             assertEquals(20, serverEkm.length);
             assertArrayEquals(clientEkm, serverEkm);
 
-            byte[] clientContextEkm = Conscrypt.exportKeyingMaterial(
+            byte[] clientContextEkm = DragonwellSecurity.exportKeyingMaterial(
                     pair.client, "FOO", new byte[0], 20);
-            byte[] serverContextEkm = Conscrypt.exportKeyingMaterial(
+            byte[] serverContextEkm = DragonwellSecurity.exportKeyingMaterial(
                     pair.server, "FOO", new byte[0], 20);
             assertNotNull(clientContextEkm);
             assertNotNull(serverContextEkm);
@@ -749,7 +750,7 @@ public class SSLEngineVersionCompatibilityTest {
                     new TestSSLEnginePair.Hooks() {
                         @Override
                         void beforeBeginHandshake(SSLEngine client, SSLEngine server) {
-                            Conscrypt.setHostname(client, "any.host");
+                            DragonwellSecurity.setHostname(client, "any.host");
 
                             SSLParameters sslParameters = server.getSSLParameters();
                             sslParameters.setSNIMatchers(singleton(FailingSniMatcher.create()));
@@ -786,7 +787,7 @@ public class SSLEngineVersionCompatibilityTest {
                 new TestSSLEnginePair.Hooks() {
                     @Override
                     void beforeBeginHandshake(SSLEngine client, SSLEngine server) {
-                        Conscrypt.setHostname(client, host);
+                        DragonwellSecurity.setHostname(client, host);
 
                         SSLParameters sslParameters = server.getSSLParameters();
                         sslParameters.setSNIMatchers(

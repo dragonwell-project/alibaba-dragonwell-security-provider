@@ -68,7 +68,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import org.conscrypt.Conscrypt;
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 
 @RunWith(JUnit4.class)
 public class SSLContextTest {
@@ -352,7 +353,7 @@ public class SSLContextTest {
 
     @Test
     public void test_SSLContext_init_withConscrypt()throws Exception {
-        Provider provider = Conscrypt.newProvider();
+        Provider provider = DragonwellSecurity.newProvider();
         SSLContext sslContext = SSLContext.getInstance("TLSv1.3", provider);
         sslContext.init(null, null, null);
         assertEquals("TLSv1.3", sslContext.getProtocol());

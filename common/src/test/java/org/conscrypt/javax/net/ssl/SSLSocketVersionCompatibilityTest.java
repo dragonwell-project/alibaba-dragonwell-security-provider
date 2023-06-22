@@ -93,7 +93,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
-import org.conscrypt.Conscrypt;
 import org.conscrypt.TestUtils;
 import org.conscrypt.java.security.StandardNames;
 import org.conscrypt.java.security.TestKeyStore;
@@ -112,6 +111,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 import tests.net.DelegatingSSLSocketFactory;
 import tests.util.ForEachRunner;
 import tests.util.Pair;
@@ -1704,7 +1706,7 @@ public class SSLSocketVersionCompatibilityTest {
                 ClientHello clientHello = TlsTester.captureTlsHandshakeClientHello(executor,
                         new DelegatingSSLSocketFactory(sslSocketFactory) {
                             @Override public SSLSocket configureSocket(SSLSocket socket) {
-                                Conscrypt.setApplicationProtocols(socket, protocolList);
+                                DragonwellSecurity.setApplicationProtocols(socket, protocolList);
                                 return socket;
                             }
                         });
@@ -2002,13 +2004,13 @@ public class SSLSocketVersionCompatibilityTest {
                 .build();
         TestSSLSocketPair pair = TestSSLSocketPair.create(context);
         try {
-            assertNull(Conscrypt.getTlsUnique(pair.client));
-            assertNull(Conscrypt.getTlsUnique(pair.server));
+            assertNull(DragonwellSecurity.getTlsUnique(pair.client));
+            assertNull(DragonwellSecurity.getTlsUnique(pair.server));
 
             pair.connect();
 
-            byte[] clientTlsUnique = Conscrypt.getTlsUnique(pair.client);
-            byte[] serverTlsUnique = Conscrypt.getTlsUnique(pair.server);
+            byte[] clientTlsUnique = DragonwellSecurity.getTlsUnique(pair.client);
+            byte[] serverTlsUnique = DragonwellSecurity.getTlsUnique(pair.server);
             assertNotNull(clientTlsUnique);
             assertNotNull(serverTlsUnique);
             assertArrayEquals(clientTlsUnique, serverTlsUnique);
@@ -2076,8 +2078,8 @@ public class SSLSocketVersionCompatibilityTest {
 
                 assertEquals(cipherSuite, pair.client.getSession().getCipherSuite());
 
-                byte[] clientTlsUnique = Conscrypt.getTlsUnique(pair.client);
-                byte[] serverTlsUnique = Conscrypt.getTlsUnique(pair.server);
+                byte[] clientTlsUnique = DragonwellSecurity.getTlsUnique(pair.client);
+                byte[] serverTlsUnique = DragonwellSecurity.getTlsUnique(pair.server);
                 assertNotNull(clientTlsUnique);
                 assertNotNull(serverTlsUnique);
                 assertArrayEquals(clientTlsUnique, serverTlsUnique);
@@ -2100,22 +2102,22 @@ public class SSLSocketVersionCompatibilityTest {
         TestSSLSocketPair pair = TestSSLSocketPair.create(context);
         try {
             // No EKM values available before handshaking
-            assertNull(Conscrypt.exportKeyingMaterial(pair.client, "FOO", null, 20));
-            assertNull(Conscrypt.exportKeyingMaterial(pair.server, "FOO", null, 20));
+            assertNull(DragonwellSecurity.exportKeyingMaterial(pair.client, "FOO", null, 20));
+            assertNull(DragonwellSecurity.exportKeyingMaterial(pair.server, "FOO", null, 20));
 
             pair.connect();
 
-            byte[] clientEkm = Conscrypt.exportKeyingMaterial(pair.client, "FOO", null, 20);
-            byte[] serverEkm = Conscrypt.exportKeyingMaterial(pair.server, "FOO", null, 20);
+            byte[] clientEkm = DragonwellSecurity.exportKeyingMaterial(pair.client, "FOO", null, 20);
+            byte[] serverEkm = DragonwellSecurity.exportKeyingMaterial(pair.server, "FOO", null, 20);
             assertNotNull(clientEkm);
             assertNotNull(serverEkm);
             assertEquals(20, clientEkm.length);
             assertEquals(20, serverEkm.length);
             assertArrayEquals(clientEkm, serverEkm);
 
-            byte[] clientContextEkm = Conscrypt.exportKeyingMaterial(
+            byte[] clientContextEkm = DragonwellSecurity.exportKeyingMaterial(
                     pair.client, "FOO", new byte[0], 20);
-            byte[] serverContextEkm = Conscrypt.exportKeyingMaterial(
+            byte[] serverContextEkm = DragonwellSecurity.exportKeyingMaterial(
                     pair.server, "FOO", new byte[0], 20);
             assertNotNull(clientContextEkm);
             assertNotNull(serverContextEkm);

@@ -1,4 +1,4 @@
-description = 'Conscrypt: libcore Stub'
+description = 'Dragonwell Security: libcore Stub'
 
 configurations {
     publicApiDocs
@@ -6,10 +6,10 @@ configurations {
 
 dependencies {
     // This is used for the @Internal annotation processing in JavaDoc
-    publicApiDocs project(':conscrypt-api-doclet')
+    publicApiDocs project(':security-api-doclet')
 
     // Only compile against this. Other modules will embed the generated code directly.
-    compileOnly project(':conscrypt-constants')
+    compileOnly project(':security-constants')
 
     testImplementation libraries.junit
 }

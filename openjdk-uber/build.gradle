@@ -1,8 +1,8 @@
-description = 'Conscrypt: OpenJdk UberJAR'
+description = 'Dragonwell Security: OpenJdk UberJAR'
 
 ext {
-    buildUberJar = Boolean.parseBoolean(System.getProperty('org.conscrypt.openjdk.buildUberJar', 'false'))
-    uberJarClassifiers = (System.getProperty('org.conscrypt.openjdk.uberJarClassifiers',
+    buildUberJar = Boolean.parseBoolean(System.getProperty('com.alibaba.dragonwell.security.native.buildUberJar', 'false'))
+    uberJarClassifiers = (System.getProperty('com.alibaba.dragonwell.security.native.uberJarClassifiers',
             'osx-x86_64,osx-aarch_64,linux-x86_64,linux-aarch_64')).split(',')
     classesDir = "${buildDir}/classes"
     resourcesDir = "${buildDir}/resources"
@@ -28,7 +28,7 @@ if (buildUberJar) {
 
     // Add the dependencies for the uber jar.
     uberJarClassifiers.each { uberJarClassifier ->
-        dependencies.uberJar "${group}:conscrypt-openjdk:${version}:${uberJarClassifier}"
+        dependencies.uberJar "${group}:security-native:${version}:${uberJarClassifier}"
     }
 
     /**
@@ -68,9 +68,9 @@ if (buildUberJar) {
     }
 
     def copySources = tasks.register("copySources", Copy) {
-        dependsOn ":conscrypt-openjdk:sourcesJar"
+        dependsOn ":security-native:sourcesJar"
         from {
-            project(":conscrypt-openjdk").sourceSets.main.java
+            project(":security-native").sourceSets.main.java
         }
         into file(sourcesDir)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -83,9 +83,9 @@ if (buildUberJar) {
     // artifact exactly matches the one on the current system.
     jar.manifest {
         attributes ('TONGSUO-Version': tongsuoVersion,
-                    'Automatic-Module-Name': 'org.conscrypt',
-                    'Bundle-SymbolicName': 'org.conscrypt',
-                    '-exportcontents': 'org.conscrypt.*')
+                    'Automatic-Module-Name': 'com.alibaba.dragonwell.security, org.conscrypt',
+                    'Bundle-SymbolicName': 'com.alibaba.dragonwell.security',
+                    '-exportcontents': 'com.alibaba.dragonwell.security.*, org.conscrypt.*')
     }
 
     apply from: "$rootDir/gradle/publishing.gradle"

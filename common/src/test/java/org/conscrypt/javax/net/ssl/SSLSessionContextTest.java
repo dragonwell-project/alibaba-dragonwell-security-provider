@@ -16,7 +16,6 @@
 
 package org.conscrypt.javax.net.ssl;
 
-import static org.conscrypt.Conscrypt.isConscrypt;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -38,6 +37,8 @@ import org.conscrypt.TestUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import com.alibaba.dragonwell.security.DragonwellSecurity;
 
 @RunWith(Parameterized.class)
 public class SSLSessionContextTest {
@@ -425,15 +426,15 @@ public class SSLSessionContextTest {
     }
 
     private int expectedClientSslSessionCacheSize(TestSSLContext c) {
-        return isConscrypt(c.clientContext.getProvider()) ? 10 : 0;
+        return DragonwellSecurity.isDragonwellSecurity(c.clientContext.getProvider()) ? 10 : 0;
     }
 
     private int expectedServerSslSessionCacheSize(TestSSLContext c) {
-        return isConscrypt(c.serverContext.getProvider()) ? 100 : 0;
+        return DragonwellSecurity.isDragonwellSecurity(c.serverContext.getProvider()) ? 100 : 0;
     }
 
     private int expectedSslSessionCacheTimeout(TestSSLContext c) {
-        return isConscrypt(c.serverContext.getProvider()) ? 8 * 3600 : 24 * 3600;
+        return DragonwellSecurity.isDragonwellSecurity(c.serverContext.getProvider()) ? 8 * 3600 : 24 * 3600;
     }
 
     private static int numSessions(SSLSessionContext s) {

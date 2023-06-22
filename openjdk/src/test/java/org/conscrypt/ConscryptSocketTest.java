@@ -69,6 +69,8 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
+import com.alibaba.dragonwell.security.DragonwellSecurity;
+
 @RunWith(Parameterized.class)
 public class ConscryptSocketTest {
     private static final long TIMEOUT_SECONDS = 5;
@@ -184,7 +186,7 @@ public class ConscryptSocketTest {
 
         private SSLSocketFactory socketFactory(OpenSSLContextImpl context) {
             SSLSocketFactory factory = context.engineGetSocketFactory();
-            Conscrypt.setUseEngineSocket(factory, useEngineSocket);
+            DragonwellSecurity.setUseEngineSocket(factory, useEngineSocket);
             return factory;
         }
 
@@ -324,9 +326,9 @@ public class ConscryptSocketTest {
             socket.setHostname(hostname);
             // getApplicationProtocol should initially return null and not trigger handshake:
             // b/146235331
-            assertNull(Conscrypt.getApplicationProtocol(socket));
+            assertNull(DragonwellSecurity.getApplicationProtocol(socket));
             if (alpnProtocols != null) {
-                Conscrypt.setApplicationProtocols(socket, alpnProtocols);
+                DragonwellSecurity.setApplicationProtocols(socket, alpnProtocols);
             }
             return socket;
         }
@@ -355,10 +357,10 @@ public class ConscryptSocketTest {
             AbstractConscryptSocket socket =
                     socketType.newServerSocket(createContext(), listener, underlyingSocketType);
             if (alpnProtocols != null) {
-                Conscrypt.setApplicationProtocols(socket, alpnProtocols);
+                DragonwellSecurity.setApplicationProtocols(socket, alpnProtocols);
             }
             if (alpnProtocolSelector != null) {
-                Conscrypt.setApplicationProtocolSelector(socket, alpnProtocolSelector);
+                DragonwellSecurity.setApplicationProtocolSelector(socket, alpnProtocolSelector);
             }
             return socket;
         }
@@ -478,8 +480,8 @@ public class ConscryptSocketTest {
 
         c.doHandshakeSuccess();
 
-        assertEquals("spdy/2", Conscrypt.getApplicationProtocol(c.client));
-        assertEquals("spdy/2", Conscrypt.getApplicationProtocol(c.server));
+        assertEquals("spdy/2", DragonwellSecurity.getApplicationProtocol(c.client));
+        assertEquals("spdy/2", DragonwellSecurity.getApplicationProtocol(c.server));
     }
 
     @Test
@@ -495,8 +497,8 @@ public class ConscryptSocketTest {
 
         c.doHandshake();
 
-        assertNull(Conscrypt.getApplicationProtocol(c.client));
-        assertNull(Conscrypt.getApplicationProtocol(c.server));
+        assertNull(DragonwellSecurity.getApplicationProtocol(c.client));
+        assertNull(DragonwellSecurity.getApplicationProtocol(c.server));
     }
 
     @Test
@@ -515,8 +517,8 @@ public class ConscryptSocketTest {
 
         c.doHandshakeSuccess();
 
-        assertEquals("spdy/2", Conscrypt.getApplicationProtocol(c.client));
-        assertEquals("spdy/2", Conscrypt.getApplicationProtocol(c.server));
+        assertEquals("spdy/2", DragonwellSecurity.getApplicationProtocol(c.client));
+        assertEquals("spdy/2", DragonwellSecurity.getApplicationProtocol(c.server));
     }
 
     @Test
@@ -535,8 +537,8 @@ public class ConscryptSocketTest {
 
         c.doHandshake();
 
-        assertNull(Conscrypt.getApplicationProtocol(c.client));
-        assertNull(Conscrypt.getApplicationProtocol(c.server));
+        assertNull(DragonwellSecurity.getApplicationProtocol(c.client));
+        assertNull(DragonwellSecurity.getApplicationProtocol(c.server));
     }
 
     @Test
@@ -675,13 +677,13 @@ public class ConscryptSocketTest {
         SSLSession session = connection.client.getSession();
         String cipherSuite = session.getCipherSuite();
         String protocol = session.getProtocol();
-        assertEquals(alpnProtocol, Conscrypt.getApplicationProtocol(connection.client));
+        assertEquals(alpnProtocol, DragonwellSecurity.getApplicationProtocol(connection.client));
 
         connection.client.close();
 
         assertEquals(cipherSuite, session.getCipherSuite());
         assertEquals(protocol, session.getProtocol());
-        assertEquals(alpnProtocol, Conscrypt.getApplicationProtocol(connection.client));
+        assertEquals(alpnProtocol, DragonwellSecurity.getApplicationProtocol(connection.client));
     }
 
     @Test
