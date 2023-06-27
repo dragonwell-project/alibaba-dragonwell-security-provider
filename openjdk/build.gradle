@@ -405,7 +405,7 @@ model {
 
     components {
         // Builds the JNI library.
-        conscrypt_openjdk_jni(NativeLibrarySpec) {
+        tongsuo_native_jni(NativeLibrarySpec) {
             nativeBuilds.each { nativeBuild ->
                 targetPlatform nativeBuild.targetPlatform()
             }

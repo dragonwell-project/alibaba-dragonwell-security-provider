@@ -1,0 +1,75 @@
+description = 'Publish dragonwell security provider linux/macos x86_64/aarch_64 multi-platform release jar.'
+
+ext {
+    releaseJar = Boolean.parseBoolean(System.getProperty('com.alibaba.dragonwell.security.native.releaseJar', 'false'))
+    classifiers = (System.getProperty('com.alibaba.dragonwell.security.native.classifiers',
+            'osx-x86_64,osx-aarch_64,linux-x86_64,linux-aarch_64')).split(',')
+    classesDir = project(":security-native-uber").classesDir
+    resourcesDir = project(":security-native-uber").resourcesDir
+    sourcesDir = project(":security-native-uber").sourcesDir
+}
+
+if (releaseJar) {
+    jar.manifest {
+        attributes ('TONGSUO-Version' : tongsuoVersion,
+                    'Automatic-Module-Name' : 'com.alibaba.dragonwell.security, org.conscrypt',
+                    'Bundle-SymbolicName': 'com.alibaba.dragonwell.security',
+                    '-exportcontents': 'com.alibaba.dragonwell.security.*, org.conscrypt.*')
+    }
+
+    sourcesJar {
+        from sourcesDir
+    }
+
+    tasks.register("jar_osx_x64", Jar) {
+        from classesDir
+        from (resourcesDir) {
+            include '**/libtongsuo_native_jni-osx-x86_64.dylib'
+        }
+        classifier = 'osx-x86_64'
+        manifest = jar.manifest
+    }
+
+    tasks.register("jar_osx_aarch64", Jar) {
+        from classesDir
+        from (resourcesDir) {
+            include '**/libtongsuo_native_jni-osx-aarch_64.dylib'
+        }
+        classifier = 'osx-aarch_64'
+        manifest = jar.manifest
+    }
+
+    tasks.register("jar_linux_x64", Jar) {
+        from classesDir
+        from (resourcesDir) {
+            include '**/libtongsuo_native_jni-linux-x86_64.so'
+        }
+        classifier = 'linux-x86_64'
+        manifest = jar.manifest
+    }
+
+    tasks.register("jar_linux_aarch64", Jar) {
+        from classesDir
+        from (resourcesDir) {
+            include '**/libtongsuo_native_jni-linux-aarch_64.so'
+        }
+        classifier = 'linux-aarch_64'
+        manifest = jar.manifest
+    }
+
+    apply from: "$rootDir/gradle/publishing.gradle"
+    publishing.publications.maven {
+        artifactId = project(":security-native").name
+        artifact sourcesJar
+        artifact javadocJar
+        artifact jar_osx_x64
+        artifact jar_osx_aarch64
+        artifact jar_linux_x64
+        artifact jar_linux_aarch64
+    }
+} else {
+    // Not building an jar - disable all tasks.
+    tasks.configureEach {
+        it.enabled = false
+    }
+}

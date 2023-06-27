@@ -8,6 +8,7 @@ include ":security-libcore-stub"
 include ":security-native"
 include ":security-native-uber"
 include ":security-testing"
+include ":security-release"
 
 project(':security-api-doclet').projectDir = "$rootDir/api-doclet" as File
 project(':security-benchmark-base').projectDir = "$rootDir/benchmark-base" as File
@@ -18,3 +19,4 @@ project(':security-libcore-stub').projectDir = "$rootDir/libcore-stub" as File
 project(':security-native').projectDir = "$rootDir/openjdk" as File
 project(':security-native-uber').projectDir = "$rootDir/openjdk-uber" as File
 project(':security-testing').projectDir = "$rootDir/testing" as File
+project(':security-release').projectDir = "$rootDir/release" as File

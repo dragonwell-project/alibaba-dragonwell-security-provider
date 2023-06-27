@@ -102,10 +102,10 @@ subprojects {
         ]
 
         signJar = { jarPath ->
-            if (rootProject.hasProperty('signingKeystore') && rootProject.hasProperty('signingPassword')) {
+            if (rootProject.hasProperty('signingKeystore') && rootProject.hasProperty('signKeyAlias') && rootProject.hasProperty('signingPassword')) {
                 def command = 'jarsigner -keystore ' + rootProject.signingKeystore +
                         ' -storepass ' + rootProject.signingPassword +
-                        ' ' + jarPath + ' signingcert'
+                        ' ' + jarPath + ' ' + rootProject.signKeyAlias
                 def process = command.execute()
                 process.waitFor()
                 if (process.exitValue()) {
