@@ -28,12 +28,12 @@ import org.conscrypt.NativeLibraryLoader.LoadResult;
  */
 final class NativeCryptoJni {
     private static final String STATIC_LIB_NAME = "conscrypt";
-    private static final String DYNAMIC_LIB_NAME_PREFIX = "conscrypt_openjdk_jni";
+    private static final String DYNAMIC_LIB_NAME_PREFIX = "tongsuo_native_jni";
 
     /**
      * Attempts to load the shared JNI library. First try loading the platform-specific library
-     * name (e.g. conscrypt_openjdk_jni-linux-x86_64). If that doesn't work, try to load the
-     * library via just the prefix (e.g. conscrypt_openjdk_jni).  If not found, try the static
+     * name (e.g. tongsuo_native_jni-linux-x86_64). If that doesn't work, try to load the
+     * library via just the prefix (e.g. tongsuo_native_jni).  If not found, try the static
      * library name.
      *
      * The non-suffixed dynamic library name is used by the Android build system, which builds
