@@ -34,7 +34,7 @@ Dragonwell Security Provider supports **Java 8/11** OpenJDK.  The build artifact
 
 ### Download JARs
 You can download
-[the JARs](http://search.maven.org/#search%7Cga%7C1%7Cg:%22org.conscrypt%22)
+[the JARs](https://repo.maven.apache.org/maven2/com/alibaba/dragonwell/)
 directly from the Maven repositories.
 
 ### OpenJDK
