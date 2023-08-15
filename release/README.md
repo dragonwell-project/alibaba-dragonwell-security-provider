@@ -56,7 +56,7 @@ Download the m2repo-uber from github CI/CD Action which is corresponding to the 
 
 1. Publish multi-platform security-native to OSSRH
 
-`./gradlew security-native:publish -Dorg.gradle.parallel=false -Dcom.alibaba.dragonwell.security.native.releaseJar=true`
+`./gradlew security-release:publish -Dorg.gradle.parallel=false -Dcom.alibaba.dragonwell.security.native.releaseJar=true`
 
 2. Visit the OSSRH site and close and release the repository.
 
