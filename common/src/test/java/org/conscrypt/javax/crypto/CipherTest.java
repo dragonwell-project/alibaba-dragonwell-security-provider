@@ -4511,6 +4511,7 @@ public final class CipherTest {
         }
     }
 
+    @Ignore("It's not supported in Openssl 3.0")
     @Test
     public void testRC4_MultipleKeySizes() throws Exception {
         final int SMALLEST_KEY_SIZE = 40;

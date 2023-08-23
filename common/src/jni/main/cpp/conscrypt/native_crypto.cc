@@ -2200,7 +2200,7 @@ static jboolean NativeCrypto_X25519(JNIEnv* env, jclass, jbyteArray outArray,
         return JNI_FALSE;
     }
 
-    size_t keylen;
+    size_t keylen = out.size();
     if (EVP_PKEY_derive_init(ctx.get()) <= 0
         || EVP_PKEY_derive_set_peer(ctx.get(), peerpubkey.get()) <= 0
         || EVP_PKEY_derive(ctx.get(), reinterpret_cast<unsigned char*>(out.get()), &keylen) <= 0) {
@@ -6686,7 +6686,10 @@ static jlong NativeCrypto_SSL_CTX_new(JNIEnv* env, jclass) {
         conscrypt::jniutil::throwExceptionFromBoringSSLError(env, "SSL_CTX_new");
         return 0;
     }
-    SSL_CTX_set_options(sslCtx.get(), SSL_OP_ALL | SSL_OP_NO_TICKET | SSL_OP_NO_COMPRESSION);
+    // Set the lowest security level for compatibility.
+    // Please refer to: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_security_level.html
+    SSL_CTX_set_security_level(sslCtx.get(), 0);
+    SSL_CTX_set_options(sslCtx.get(), SSL_OP_ALL | SSL_OP_NO_TICKET | SSL_OP_NO_COMPRESSION | SSL_OP_IGNORE_UNEXPECTED_EOF);
     // Disable TLSv1.3 server send session tickets
     SSL_CTX_set_num_tickets(sslCtx.get(), 0);
     SSL_CTX_set_min_proto_version(sslCtx.get(), TLS1_VERSION);

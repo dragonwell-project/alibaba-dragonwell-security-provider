@@ -39,7 +39,10 @@ public class EllipticCurvesHelloExtension extends HelloExtension {
         supported = new ArrayList<EllipticCurve>(ellipticCurvesListIn.available() / 2);
         while (ellipticCurvesListIn.available() >= 2) {
             int curve_id = in.readUnsignedShort();
-            supported.add(EllipticCurve.fromIdentifier(curve_id));
+            EllipticCurve ec = EllipticCurve.fromIdentifier(curve_id);
+            if(ec != null) {
+                supported.add(ec);
+            }
         }
     }
     @Override
