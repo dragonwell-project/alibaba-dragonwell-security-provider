@@ -40,6 +40,8 @@ import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.List;
+
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -57,6 +59,7 @@ public class KeyFactoryTestRSA extends
         new CipherAsymmetricCryptHelper("RSA").test(keyPair);
     }
 
+    @Ignore("It's not supported in Openssl 3.0")
     @Test
     public void getEncodedWhenCrtValuesMissing() throws Exception {
         PrivateKey privateKey = getPrivateKey();

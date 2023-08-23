@@ -65,6 +65,12 @@ public enum EllipticCurve {
                 return curve;
             }
         }
+        // Curve Identifier may be
+        // ffdhe2048(0x0100) ffdhe3072(0x0101) ffdhe4096(0x0102) ffdhe6144(0x0103) ffdhe8192(0x0x0104)
+        // They are not supported in Dragonwell Security Provider, So ingnore them.
+        if (identifier >= 256) {
+            return null;
+        }
         throw new AssertionError("Unknown curve identifier " + identifier);
     }
     @Override
