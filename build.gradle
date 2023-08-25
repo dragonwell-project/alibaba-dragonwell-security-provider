@@ -57,7 +57,7 @@ subprojects {
 
     group = "com.alibaba.dragonwell"
     description = 'Dragonwell Security is an alternate High Performance Java Security Provider'
-    version = "1.0.0"
+    version = "1.2.0"
 
     ext {
         if (project.hasProperty("tongsuoHome")) {
